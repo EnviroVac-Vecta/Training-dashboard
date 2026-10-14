@@ -3,7 +3,7 @@
 A web page managers open to view, sort and filter everyone's HSI training status.
 Each morning (~6:45 AM Central) the **Training Dashboard** workflow gets the Training Summary
 file from SharePoint, rebuilds the dashboard, and publishes it to GitHub Pages at
-**https://envirovac-vecta.github.io/training-dashboard/**.
+**https://envirovac-vecta.github.io/Training-dashboard/**.
 
 Anyone with the link can open it. Each person's filters are their own.
 Optional passcode: add the `DASHBOARD_PASSCODE` secret and run the workflow, and the page will ask
