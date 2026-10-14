@@ -1,0 +1,52 @@
+name: Training Dashboard
+
+# Pulls the Training Summary file from SharePoint (through the Power Automate
+# flow in TRAINING_SUMMARY_URL), rebuilds the dashboard and publishes it to
+# GitHub Pages. Runs daily and can be run by hand from the Actions tab.
+on:
+  schedule:
+    - cron: '45 11 * * *'   # daily, ~6:45 AM Central (summer) / 5:45 AM (winter)
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: training-dashboard
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: pip install openpyxl requests cryptography
+
+      - name: Build dashboard from the Training Summary file
+        env:
+          ALL_SECRETS: ${{ toJSON(secrets) }}
+        run: python build.py
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: site
+
+  deploy:
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,36 @@
+# EnviroVac Training Dashboard
+
+A web page managers open to view, sort and filter everyone's HSI training status.
+Each morning (~6:45 AM Central) the **Training Dashboard** workflow gets the Training Summary
+file from SharePoint, rebuilds the dashboard, and publishes it to GitHub Pages at
+**https://envirovac-vecta.github.io/training-dashboard/**.
+
+The training data is locked with a passcode. People enter it once and their browser remembers it.
+Each person's filters are their own. Nothing in this repo contains readable employee data.
+
+| File | What it does |
+|---|---|
+| `index.html` | the dashboard page |
+| `build.py` | Training Summary file → locked dashboard data |
+| `.github/workflows/training_dashboard.yml` | the daily run |
+
+## Setup
+1. **Power Automate flow "Training Summary - Send file"**
+   - Trigger: *When an HTTP request is received* (who can trigger: Anyone).
+   - SharePoint *Get file content using path* → the site and the Training Summary file.
+   - *Response* → Status code `200`, Body = *File Content* from the step above.
+   - Save, then copy the trigger's HTTP URL.
+2. **Secrets** (Settings → Secrets and variables → Actions → New repository secret):
+   | Secret | What |
+   |---|---|
+   | `TRAINING_SUMMARY_URL` | the flow's HTTP URL from step 1 |
+   | `DASHBOARD_PASSCODE` | the passcode viewers type (use a phrase, not a short number) |
+3. **Pages**: Settings → Pages → Build and deployment → Source: **GitHub Actions**.
+4. Actions → **Training Dashboard** → **Run workflow**.
+
+## Notes
+- Change the passcode: update `DASHBOARD_PASSCODE` and run the workflow. Everyone enters the new one.
+- Change the time: edit the `cron` line in the workflow (UTC; Central = UTC−5 summer, UTC−6 winter).
+- The Training Summary file must keep these column headers: Employee ID, Name, Role, Location,
+  Course Name, Score, Date Assigned, Date Completed, Date Expire, Status.
+- If a run fails, open it in Actions; the error is shown on the run's summary page.

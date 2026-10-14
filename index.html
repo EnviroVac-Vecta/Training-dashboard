@@ -1,0 +1,616 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><title>EnviroVac Training Dashboard</title><meta name="robots" content="noindex,nofollow"><meta name=viewport content="width=device-width,initial-scale=1,viewport-fit=cover"><style>:root{color-scheme:light;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}html{scroll-padding-top:env(safe-area-inset-top,0px)}body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#fff;color:#000}img{max-width:100%}[hidden]:not([hidden=until-found i]){display:none!important}</style></head><body>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..100,500..800&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap">
+<style>
+/* Layout: control-room board — slim header, status tiles as filter switches, location bars, then the record table. */
+:root{
+  --bg:#f3f5f7; --surface:#ffffff; --sunk:#e8ecf0; --line:#d5dbe2; --fg:#16202b; --muted:#5b6877;
+  --accent:#0f5f8a; --accent-ink:#ffffff; --accent-soft:#dcecf5;
+  --s-expired:#c0362c; --s-d30:#d9731a; --s-d60:#c9a10f; --s-d90:#7f9a2e; --s-current:#2e8b57;
+  --s-notdone:#7a8796; --s-failed:#8a3fa8; --s-none:#b4bdc7;
+  --pill-ink:#ffffff;
+  --f-display:"Archivo","Arial Narrow",system-ui,sans-serif;
+  --f-body:"IBM Plex Sans",system-ui,-apple-system,"Segoe UI",sans-serif;
+  --f-mono:"IBM Plex Mono",ui-monospace,"SFMono-Regular",Menlo,Consolas,monospace;
+  --radius:6px;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0f151b; --surface:#16202a; --sunk:#1d2934; --line:#2b3a48; --fg:#e4eaf0; --muted:#9aa8b6;
+  --accent:#5cb3e0; --accent-ink:#06202e; --accent-soft:#163448;
+  --s-expired:#ef6a5e; --s-d30:#f0954a; --s-d60:#e3c246; --s-d90:#a9c457; --s-current:#4fbf83;
+  --s-notdone:#8e9cab; --s-failed:#b97ad3; --s-none:#4a5866; --pill-ink:#0f151b; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#0f151b; --surface:#16202a; --sunk:#1d2934; --line:#2b3a48; --fg:#e4eaf0; --muted:#9aa8b6;
+  --accent:#5cb3e0; --accent-ink:#06202e; --accent-soft:#163448;
+  --s-expired:#ef6a5e; --s-d30:#f0954a; --s-d60:#e3c246; --s-d90:#a9c457; --s-current:#4fbf83;
+  --s-notdone:#8e9cab; --s-failed:#b97ad3; --s-none:#4a5866; --pill-ink:#0f151b; color-scheme:dark}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--f-body);font-size:14px;line-height:1.45}
+.wrap{max-width:1320px;margin:0 auto;padding-inline:clamp(16px,3vw,32px);padding-block:20px 48px;display:flex;flex-direction:column;gap:18px}
+header.top{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:10px 24px;border-bottom:2px solid var(--fg);padding-bottom:12px}
+.eyebrow{font-family:var(--f-mono);font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+h1{font-family:var(--f-display);font-stretch:80%;font-weight:800;font-size:clamp(26px,3.6vw,38px);line-height:1;margin:4px 0 0;letter-spacing:-.01em;text-wrap:balance}
+.fresh{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;display:flex;flex-direction:column;gap:2px}
+.fresh b{color:var(--fg);font-weight:500}
+.fresh .stale{color:var(--s-expired)}
+
+/* filters */
+.filters{display:grid;grid-template-columns:minmax(200px,2fr) repeat(3,minmax(150px,1fr)) auto;gap:10px;align-items:end}
+.field{display:flex;flex-direction:column;gap:4px;min-width:0}
+.field > label,.flabel{font-size:11px;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted)}
+.ms{position:relative}
+.ms-btn{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 30px 8px 10px;width:100%;text-align:left;cursor:pointer;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;position:relative}
+.ms-btn::after{content:"";position:absolute;right:12px;top:50%;width:7px;height:7px;border-right:1.5px solid var(--muted);border-bottom:1.5px solid var(--muted);transform:translateY(-70%) rotate(45deg)}
+.ms-btn.on{border-color:var(--accent);background:var(--accent-soft)}
+.ms-btn:focus-visible,.ms-pop input:focus-visible,.ms-act:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ms-pop{position:absolute;top:calc(100% + 4px);left:0;z-index:20;width:min(360px,calc(100vw - 32px));background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);box-shadow:0 10px 30px color-mix(in srgb,var(--fg) 18%,transparent);display:flex;flex-direction:column;max-height:min(420px,70vh)}
+.ms-pop.right{left:auto;right:0}
+.ms-pop .ms-search{padding:8px;border-bottom:1px solid var(--line)}
+.ms-pop input[type=search]{padding:7px 9px}
+.ms-tools{display:flex;justify-content:space-between;gap:8px;padding:6px 10px;border-bottom:1px solid var(--line);font-size:12px;color:var(--muted)}
+.ms-act{all:unset;cursor:pointer;color:var(--accent);font-weight:500}
+.ms-act:hover{text-decoration:underline}
+.ms-list{overflow-y:auto;padding:4px 0;overscroll-behavior:contain}
+.ms-opt{display:flex;gap:8px;align-items:flex-start;padding:6px 10px;cursor:pointer;font-size:13px;line-height:1.3}
+.ms-opt:hover{background:var(--sunk)}
+.ms-opt input{margin:2px 0 0;accent-color:var(--accent);flex:none}
+.ms-opt .sub{display:inline;margin-left:4px}
+.ms-none{padding:14px 10px;color:var(--muted);font-size:13px}
+input[type=search],select{font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 10px;min-width:0;width:100%}
+input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile:focus-visible,th button:focus-visible,.locrow:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.btn{font:inherit;font-weight:500;border-radius:var(--radius);padding:8px 14px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent);color:var(--accent)}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn.primary:hover{filter:brightness(1.08);color:var(--accent-ink)}
+.chiprow{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.active-chip{display:inline-flex;align-items:center;gap:6px;background:var(--accent-soft);color:var(--fg);border-radius:999px;padding:3px 6px 3px 10px;font-size:12px}
+.active-chip button{border:0;background:transparent;color:var(--muted);cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.active-chip button:hover{color:var(--fg)}
+.toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
+
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:-4px}
+.tabs button{font:inherit;font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:16px;letter-spacing:.01em;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:8px 16px 9px;color:var(--muted);cursor:pointer}
+.tabs button:hover{color:var(--fg)}
+.tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
+.tabs button:focus-visible,.stchip:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tabpanel{display:flex;flex-direction:column;gap:12px}
+.tabpanel[hidden]{display:none!important}
+.stchips{display:flex;flex-wrap:wrap;gap:6px}
+.stchip{font:inherit;font-size:12.5px;display:inline-flex;align-items:center;gap:7px;padding:5px 11px 5px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer}
+.stchip i{width:9px;height:9px;border-radius:50%;background:var(--c);flex:none}
+.stchip b{font-family:var(--f-mono);font-weight:500;color:var(--muted);font-variant-numeric:tabular-nums}
+.stchip:hover{border-color:var(--c)}
+.stchip[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 16%,var(--surface));border-color:var(--c)}
+.stchip[aria-pressed="true"] b{color:var(--fg)}
+.stchips.dim .stchip[aria-pressed="false"]{opacity:.6}
+/* status tiles */
+.tiles{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px}
+.tile{position:relative;text-align:left;font:inherit;color:var(--fg);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px 12px;cursor:pointer;display:flex;flex-direction:column;gap:2px;overflow:hidden}
+.tile::before{content:"";position:absolute;inset:0 0 auto 0;height:4px;background:var(--c)}
+.tile .n{font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:28px;line-height:1.1;font-variant-numeric:tabular-nums}
+.tile .l{font-size:12px;color:var(--muted);line-height:1.25}
+.tile:hover{border-color:var(--c)}
+.tile[aria-pressed="true"]{background:color-mix(in srgb,var(--c) 14%,var(--surface));border-color:var(--c)}
+.tile[aria-pressed="true"] .l{color:var(--fg)}
+.tiles.dim .tile[aria-pressed="false"]{opacity:.55}
+.hint{font-size:12px;color:var(--muted)}
+
+/* location bars */
+.panel{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+.panel h2{font-family:var(--f-display);font-stretch:85%;font-size:17px;font-weight:700;margin:0;letter-spacing:.005em}
+.panelhead{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:baseline;gap:6px 16px;margin-bottom:10px}
+.legend{display:flex;flex-wrap:wrap;gap:4px 12px;font-size:12px;color:var(--muted)}
+.legend span{display:inline-flex;align-items:center;gap:5px}
+.legend i{width:10px;height:10px;border-radius:2px;background:var(--c);display:inline-block}
+.locs{display:flex;flex-direction:column;gap:6px}
+.locrow{display:grid;grid-template-columns:150px minmax(0,1fr) 56px;gap:10px;align-items:center;background:none;border:0;padding:3px 4px;border-radius:4px;cursor:pointer;font:inherit;color:var(--fg);text-align:left}
+.locrow:hover{background:var(--sunk)}
+.locrow.sel{background:var(--accent-soft)}
+.locname{font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.locname small{font-family:var(--f-mono);color:var(--muted);margin-right:4px}
+.bar{display:flex;height:16px;border-radius:3px;overflow:hidden;background:var(--sunk)}
+.bar span{height:100%;background:var(--c)}
+.loctot{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
+
+/* table */
+.tablebar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
+.seg button{font:inherit;font-size:13px;border:0;background:var(--surface);color:var(--muted);padding:7px 14px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--fg);color:var(--bg)}
+.count{font-family:var(--f-mono);font-size:12px;color:var(--muted)}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);background:var(--surface)}
+table{border-collapse:collapse;width:100%;min-width:900px;font-size:13px}
+th{position:sticky;top:0;background:var(--sunk);text-align:left;font-weight:600;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);border-bottom:1px solid var(--line);padding:0;z-index:1}
+th button{all:unset;display:block;padding:9px 10px;cursor:pointer;white-space:nowrap}
+th button:hover{color:var(--fg)}
+th .arr{font-family:var(--f-mono);margin-left:4px;color:var(--accent)}
+td{padding:7px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+tr:last-child td{border-bottom:0}
+tbody tr:hover td{background:color-mix(in srgb,var(--accent-soft) 45%,transparent)}
+td.num,td.date{font-family:var(--f-mono);font-size:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+td.num{text-align:right}
+td.course{min-width:260px;max-width:420px}
+.who{all:unset;cursor:pointer;font-weight:500;color:var(--fg);border-bottom:1px dotted var(--muted)}
+.who:hover{color:var(--accent);border-color:var(--accent)}
+.sub{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
+.pill{display:inline-block;white-space:nowrap;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--c);color:var(--pill-ink)}
+.pill.soft{background:transparent;color:var(--c);box-shadow:inset 0 0 0 1.5px var(--c)}
+tr.old td{opacity:.6}
+tr.tint td{background:color-mix(in srgb,var(--c) var(--t),var(--surface))}
+tr.tint td:first-child{box-shadow:inset 4px 0 0 var(--c)}
+tbody tr.tint:hover td{background:color-mix(in srgb,var(--c) calc(var(--t) + 10%),var(--surface))}
+tr.old.tint td{background:color-mix(in srgb,var(--c) 6%,var(--surface))}
+
+.tag{font-size:10.5px;font-family:var(--f-mono);color:var(--muted);border:1px solid var(--line);border-radius:3px;padding:0 4px;margin-left:6px;white-space:nowrap}
+.cnt{font-family:var(--f-mono);font-size:12px;text-align:right;font-variant-numeric:tabular-nums}
+.cnt.z{color:var(--line)}
+.cnt b{display:inline-block;min-width:24px;padding:1px 6px;border-radius:3px;background:color-mix(in srgb,var(--c) 18%,transparent);color:var(--fg);font-weight:600}
+.more{display:flex;justify-content:center;padding:10px}
+.empty{padding:40px 16px;text-align:center;color:var(--muted)}
+.notice{background:var(--surface);border:1px solid var(--line);border-left:4px solid var(--s-expired);padding:12px 14px;border-radius:var(--radius)}
+footer{font-size:12px;color:var(--muted);max-width:80ch}
+
+@media (max-width:1100px){.tiles{grid-template-columns:repeat(4,minmax(0,1fr))}.filters{grid-template-columns:repeat(2,minmax(0,1fr))}.filters .field.q{grid-column:1/-1}}
+@media (max-width:560px){.tiles{grid-template-columns:repeat(2,minmax(0,1fr))}.filters{grid-template-columns:1fr}.locrow{grid-template-columns:96px minmax(0,1fr) 40px}.locname small{display:none}.fresh{text-align:left}}
+@media (prefers-reduced-motion:no-preference){.bar span{transition:width .25s ease}}
+
+.gate{min-height:70vh;display:grid;place-items:center}
+.gate form{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:24px;display:flex;flex-direction:column;gap:12px;width:min(360px,100%)}
+.gate h2{font-family:var(--f-display);font-stretch:85%;font-size:22px;margin:0}
+.gate p{margin:0;color:var(--muted);font-size:13px}
+.gate input{font:inherit;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:var(--radius);padding:9px 10px}
+.gate .err{color:var(--s-expired);font-size:13px;min-height:1.2em}
+</style>
+
+<div class="gate" id="gate" hidden><form id="gateform"><h2>EnviroVac Training Dashboard</h2><p>Enter the dashboard passcode. Your browser will remember it.</p><input type="password" id="pass" autocomplete="current-password" aria-label="Passcode" required><button class="btn primary" type="submit">Open dashboard</button><div class="err" id="gateerr" role="alert"></div></form></div>
+
+<div class="wrap" id="app" hidden>
+  <header class="top">
+    <div>
+      <div class="eyebrow">EnviroVac · HSI Training Summary</div>
+      <h1>Employee Training Status</h1>
+    </div>
+    <div class="fresh" id="fresh"><span>Loading data…</span></div>
+  </header>
+
+  <div id="loaderr" class="notice" hidden></div>
+
+  <section class="filters" aria-label="Filters">
+    <div class="field q ms" data-k="emp"><span class="flabel" id="lbl-emp">Employee</span></div>
+    <div class="field ms" data-k="loc"><span class="flabel" id="lbl-loc">Location</span></div>
+    <div class="field ms" data-k="role"><span class="flabel" id="lbl-role">Role</span></div>
+    <div class="field ms" data-k="course"><span class="flabel" id="lbl-course">Course</span></div>
+    <div class="field"><button class="btn" id="f-clear" type="button">Clear filters</button></div>
+  </section>
+  <div class="chiprow" id="activechips"></div>
+
+  <nav class="tabs" role="tablist" aria-label="Dashboard sections">
+    <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Results</button>
+    <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
+  </nav>
+
+  <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
+    <div class="stchips" id="stchips" role="group" aria-label="Filter by status"></div>
+    <div class="tablebar">
+      <div class="chiprow">
+        <div class="seg" role="group" aria-label="View">
+          <button type="button" id="v-rec" aria-pressed="true">Training records</button>
+          <button type="button" id="v-emp" aria-pressed="false">By employee</button>
+        </div>
+        <label class="toggle"><input type="checkbox" id="f-old"> Show older records replaced by a retake</label>
+      </div>
+      <div class="chiprow"><span class="count" id="count"></span><button class="btn" id="export" type="button" hidden>Export CSV</button></div>
+    </div>
+    <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
+    <div class="more" id="more" hidden><button class="btn" type="button" id="morebtn">Show more</button></div>
+  </div>
+
+  <div id="tab-overview" role="tabpanel" aria-labelledby="t-overview" class="tabpanel" hidden>
+    <section aria-label="Status summary">
+      <div class="tiles" id="tiles"></div>
+      <div class="hint" style="margin-top:6px">Click a status to filter by it. Click more than one to combine. Expiration windows are counted from today.</div>
+    </section>
+    <section class="panel" aria-label="By location">
+      <div class="panelhead"><h2>Status by location</h2><div class="legend" id="legend"></div></div>
+      <div class="locs" id="locs"></div>
+    </section>
+  </div>
+
+  <footer>
+    Statuses are worked out from the expiration date in the HSI export. When an employee has retaken a course, the newest completion counts and older records for that course are hidden unless you turn them on in Results. Your filters are your own; nobody else sees them change.
+  </footer>
+</div>
+
+<script>
+(function(){
+const ST = [
+  {k:'expired', label:'Expired', c:'--s-expired'},
+  {k:'d30', label:'Expires in 30 days', c:'--s-d30'},
+  {k:'d60', label:'Expires in 31–60 days', c:'--s-d60'},
+  {k:'d90', label:'Expires in 61–90 days', c:'--s-d90'},
+  {k:'current', label:'Current', c:'--s-current'},
+  {k:'notdone', label:'Assigned, not completed', c:'--s-notdone'},
+  {k:'failed', label:'Failed', c:'--s-failed'},
+  {k:'none', label:'No training on file', c:'--s-none'},
+];
+const STMAP = Object.fromEntries(ST.map(s=>[s.k,s]));
+const TINT = {expired:16, d30:15, d60:13, d90:10};
+const short = {expired:'Expired',d30:'≤30 days',d60:'31–60 days',d90:'61–90 days',current:'Current',notdone:'Not completed',failed:'Failed',none:'No training'};
+const $ = id => document.getElementById(id);
+const esc = s => String(s==null?'':s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const today = new Date(); today.setHours(0,0,0,0);
+const DAY = 86400000;
+const parseD = s => { if(!s) return null; const [y,m,d]=s.split('-').map(Number); return new Date(y,m-1,d); };
+const fmtD = d => d ? d.toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'}) : '';
+const isoD = d => d ? d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0') : '';
+
+let RECS = [], EMPS = [];
+const PAGE = 200;
+let shown = PAGE;
+const LS = 'evtd-filters-v2';
+const MS = ['emp','loc','role','course'];
+let F = {tab:'results',emp:[],loc:[],role:[],course:[],st:[],old:false,view:'rec',sort:{rec:['days',1],emp:['expired',-1]}};
+try{ const s = JSON.parse(localStorage.getItem(LS)||'null'); if(s) F = Object.assign(F,s); MS.concat('st').forEach(k=>{ if(!Array.isArray(F[k])) F[k]=[]; }); }catch(e){}
+const save = () => { try{ localStorage.setItem(LS, JSON.stringify(F)); }catch(e){} };
+
+function classify(r){
+  if(!r.course) return 'none';
+  const s = (r.src||'').toLowerCase();
+  if(s==='failed') return 'failed';
+  if(s==='not completed') return 'notdone';
+  if(s==='expired') return 'expired';
+  if(r.expire){
+    const d = r.days;
+    if(d<0) return 'expired';
+    if(d<=30) return 'd30';
+    if(d<=60) return 'd60';
+    if(d<=90) return 'd90';
+  }
+  return 'current';
+}
+
+function build(data){
+  const ci = Object.fromEntries(data.cols.map((c,i)=>[c,i]));
+  RECS = data.rows.map((row,i)=>{
+    const r = {
+      i, id:row[ci['Employee ID']]||'', name:row[ci['Name']]||'', role:row[ci['Role']]||'Not set',
+      loc:row[ci['Location']]||'Unassigned', course:row[ci['Course Name']]||'', score:row[ci['Score']],
+      assigned:parseD(row[ci['Date Assigned']]), completed:parseD(row[ci['Date Completed']]),
+      expire:parseD(row[ci['Date Expire']]), src:row[ci['Status']]||'', old:false, retakes:0
+    };
+    r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
+    r.st = classify(r);
+    r.empKey = r.id || r.name;
+    r.hay = (r.name+' '+r.id+' '+r.course).toLowerCase();
+    return r;
+  });
+  // A blank "no course" row only means something when the employee has no other records.
+  const hasCourse = new Set(RECS.filter(r=>r.course).map(r=>r.empKey));
+  RECS = RECS.filter(r=>r.course || !hasCourse.has(r.empKey));
+  // Retakes: newest completion of a course replaces older records of the same course.
+  const groups = new Map();
+  RECS.forEach(r=>{ if(!r.course) return; const k=r.empKey+'|'+r.course.toLowerCase(); (groups.get(k)||groups.set(k,[]).get(k)).push(r); });
+  groups.forEach(g=>{
+    if(g.length<2) return;
+    const done = g.filter(r=>r.completed && /completed|expired/i.test(r.src) && !/not completed/i.test(r.src));
+    if(done.length){
+      done.sort((a,b)=>(b.completed-a.completed)||((b.expire||0)-(a.expire||0)));
+      const top = done[0];
+      g.forEach(r=>{
+        if(r===top) return;
+        const when = r.completed || r.assigned;
+        if(!when || when <= top.completed){ r.old = true; top.retakes++; }
+      });
+    } else {
+      const when = r => (r.completed||r.assigned||new Date(0)).getTime();
+      g.sort((a,b)=>when(b)-when(a));
+      g.slice(1).forEach(r=>{ r.old = true; g[0].retakes++; });
+    }
+  });
+}
+
+// ---------- multi-select filters ----------
+const MSDEF = {
+  emp:{label:'Employee', all:'All employees', noun:['employee','employees'], key:r=>r.empKey},
+  loc:{label:'Location', all:'All locations', noun:['location','locations'], key:r=>r.loc},
+  role:{label:'Role', all:'All roles', noun:['role','roles'], key:r=>r.role},
+  course:{label:'Course', all:'All courses', noun:['course','courses'], key:r=>r.course}
+};
+let EMPINFO = new Map();
+function pass(r, skip){
+  if(!F.old && r.old) return false;
+  for(const k of MS){
+    if(k===skip || !F[k].length) continue;
+    if(!F[k].includes(MSDEF[k].key(r))) return false;
+  }
+  return true;
+}
+// base = all filters except status
+function baseRows(){ return RECS.filter(r=>pass(r)); }
+
+function optionLabel(k,v){
+  if(k==='emp'){ const e=EMPINFO.get(v); return e ? esc(e.name)+'<span class="sub">'+esc(e.loc)+'</span>' : esc(v); }
+  return esc(v);
+}
+function textOf(k,v){ if(k==='emp'){ const e=EMPINFO.get(v); return e?e.name+' '+e.id+' '+e.loc:v; } return v; }
+function nameOf(k,v){ if(k==='emp'){ const e=EMPINFO.get(v); return e?e.name:v; } return v; }
+
+function setupMS(){
+  EMPINFO = new Map();
+  RECS.forEach(r=>{ if(!EMPINFO.has(r.empKey)) EMPINFO.set(r.empKey,{name:r.name,id:r.id,loc:r.loc}); });
+  const allVals = k => new Set(RECS.map(MSDEF[k].key).filter(Boolean));
+  MS.forEach(k=>{ const ok=allVals(k); F[k]=F[k].filter(v=>ok.has(v)); });
+  document.querySelectorAll('.ms').forEach(box=>{
+    const k = box.dataset.k;
+    if(box.querySelector('.ms-btn')) return;
+    const btn = document.createElement('button');
+    btn.type='button'; btn.className='ms-btn'; btn.id='f-'+k;
+    btn.setAttribute('aria-haspopup','true'); btn.setAttribute('aria-expanded','false');
+    btn.setAttribute('aria-labelledby','lbl-'+k+' f-'+k);
+    box.appendChild(btn);
+    btn.addEventListener('click',e=>{ e.stopPropagation(); box.querySelector('.ms-pop') ? closePop() : openPop(box); });
+  });
+  $('f-old').checked = !!F.old;
+}
+function msButtons(){
+  MS.forEach(k=>{
+    const b=$('f-'+k); if(!b) return; const sel=F[k], d=MSDEF[k];
+    b.textContent = !sel.length ? d.all : sel.length===1 ? nameOf(k,sel[0]) : sel.length+' '+d.noun[1]+' selected';
+    b.classList.toggle('on', sel.length>0);
+  });
+}
+let openK = null;
+function closePop(){
+  document.querySelectorAll('.ms-pop').forEach(p=>p.remove());
+  document.querySelectorAll('.ms-btn').forEach(b=>b.setAttribute('aria-expanded','false'));
+  openK = null;
+}
+function openPop(box){
+  closePop();
+  const k = box.dataset.k, d = MSDEF[k];
+  openK = k;
+  // options reflect the other filters, so picking a location narrows the employee list
+  const counts = new Map();
+  RECS.forEach(r=>{ if(!pass(r,k)) return; const v=d.key(r); if(!v) return; counts.set(v,(counts.get(v)||0)+1); });
+  F[k].forEach(v=>{ if(!counts.has(v)) counts.set(v,0); });
+  const vals = [...counts.keys()].sort((a,b)=>nameOf(k,a).localeCompare(nameOf(k,b)));
+  const pop = document.createElement('div');
+  pop.className='ms-pop'; pop.setAttribute('role','dialog'); pop.setAttribute('aria-label','Choose '+d.noun[1]);
+  pop.innerHTML = '<div class="ms-search"><input type="search" id="ms-q-'+k+'" placeholder="Type to find '+(k==='emp'?'a name or ID':'a '+d.noun[0])+'" aria-label="Find '+d.noun[0]+'" autocomplete="off"></div>'+
+    '<div class="ms-tools"><span class="ms-n"></span><span style="display:flex;gap:12px"><button type="button" class="ms-act" data-a="all">Select shown</button><button type="button" class="ms-act" data-a="none">Clear</button></span></div>'+
+    '<div class="ms-list"></div>';
+  box.appendChild(pop);
+  box.querySelector('.ms-btn').setAttribute('aria-expanded','true');
+  if(box.getBoundingClientRect().left + pop.offsetWidth > window.innerWidth - 16) pop.classList.add('right');
+  const list = pop.querySelector('.ms-list'), q = pop.querySelector('input[type=search]');
+  let shownVals = vals;
+  const draw = () => {
+    const t = q.value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+    shownVals = t.length ? vals.filter(v=>{ const h=textOf(k,v).toLowerCase(); return t.every(x=>h.includes(x)); }) : vals;
+    list.innerHTML = shownVals.length ? shownVals.map((v,i)=>'<label class="ms-opt"><input type="checkbox" value="'+esc(v)+'"'+(F[k].includes(v)?' checked':'')+'><span>'+optionLabel(k,v)+'</span></label>').join('') : '<div class="ms-none">No matches.</div>';
+    pop.querySelector('.ms-n').textContent = F[k].length ? F[k].length+' selected' : shownVals.length+' '+(shownVals.length===1?d.noun[0]:d.noun[1]);
+  };
+  draw();
+  q.addEventListener('input', draw);
+  list.addEventListener('change', e=>{
+    const v = e.target.value;
+    F[k] = e.target.checked ? [...new Set([...F[k], v])] : F[k].filter(x=>x!==v);
+    shown = PAGE; render(); pop.querySelector('.ms-n').textContent = F[k].length ? F[k].length+' selected' : shownVals.length+' '+d.noun[1];
+  });
+  pop.querySelector('.ms-tools').addEventListener('click', e=>{
+    const a = e.target.closest('[data-a]'); if(!a) return;
+    F[k] = a.dataset.a==='all' ? [...new Set([...F[k], ...shownVals])] : [];
+    draw(); shown = PAGE; render();
+  });
+  pop.addEventListener('click', e=>e.stopPropagation());
+  setTimeout(()=>q.focus(), 0);
+}
+document.addEventListener('click', ()=>{ if(openK) closePop(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && openK){ const k=openK; closePop(); $('f-'+k).focus(); } });
+
+function renderTiles(base){
+  const n = {}; ST.forEach(s=>n[s.k]=0); base.forEach(r=>n[r.st]++);
+  const sc = $('stchips'); sc.classList.toggle('dim', F.st.length>0);
+  sc.innerHTML = ST.map(s=>'<button type="button" class="stchip" data-k="'+s.k+'" aria-pressed="'+F.st.includes(s.k)+'" style="--c:var('+s.c+')"><i></i>'+short[s.k]+' <b>'+n[s.k].toLocaleString()+'</b></button>').join('');
+  const t = $('tiles');
+  t.classList.toggle('dim', F.st.length>0);
+  t.innerHTML = ST.map(s=>'<button type="button" class="tile" data-k="'+s.k+'" aria-pressed="'+F.st.includes(s.k)+'" style="--c:var('+s.c+')"><span class="n">'+n[s.k].toLocaleString()+'</span><span class="l">'+s.label+'</span></button>').join('');
+}
+
+function renderLocs(base){
+  // ignore the location filter so every location stays visible for comparison
+  const rows = RECS.filter(r=>pass(r,'loc') && (!F.st.length || F.st.includes(r.st)));
+  const by = new Map();
+  rows.forEach(r=>{ const o = by.get(r.loc) || by.set(r.loc,{tot:0}).get(r.loc); o[r.st]=(o[r.st]||0)+1; o.tot++; });
+  const locs = [...by.entries()].sort((a,b)=>a[0].localeCompare(b[0]));
+  const max = Math.max(1,...locs.map(([,o])=>o.tot));
+  $('locs').innerHTML = locs.length ? locs.map(([loc,o])=>{
+    const m = loc.match(/^(\d+)-(.*)$/);
+    const nm = m ? '<small>'+m[1]+'</small>'+esc(m[2]) : esc(loc);
+    const on = F.loc.includes(loc);
+    const segs = ST.filter(s=>o[s.k]).map(s=>'<span title="'+esc(s.label)+': '+o[s.k]+'" style="--c:var('+s.c+');width:'+(o[s.k]/max*100)+'%"></span>').join('');
+    return '<button type="button" class="locrow'+(on?' sel':'')+'" data-loc="'+esc(loc)+'" aria-pressed="'+on+'"><span class="locname">'+nm+'</span><span class="bar">'+segs+'</span><span class="loctot">'+o.tot.toLocaleString()+'</span></button>';
+  }).join('') : '<div class="empty">No records match these filters.</div>';
+}
+
+function chips(){
+  const c = [];
+  MS.forEach(k=>F[k].forEach(v=>c.push([k+':'+v, (k==='emp'?'':MSDEF[k].label+': ')+nameOf(k,v)])));
+  F.st.forEach(k=>c.push(['st:'+k,short[k]]));
+  $('activechips').innerHTML = c.map(([k,l])=>'<span class="active-chip">'+esc(l)+'<button type="button" data-rm="'+esc(k)+'" aria-label="Remove filter '+esc(l)+'">×</button></span>').join('');
+}
+
+const recCols = [
+  ['name','Employee'],['loc','Location'],['role','Role'],['course','Course'],
+  ['completed','Completed'],['expire','Expires'],['days','Days left'],['st','Status']
+];
+const stOrder = Object.fromEntries(ST.map((s,i)=>[s.k,i]));
+function cmp(a,b,key){
+  let x=a[key], y=b[key];
+  if(key==='st'){ x=stOrder[x]; y=stOrder[y]; }
+  if(x instanceof Date) x=x.getTime(); if(y instanceof Date) y=y.getTime();
+  const xn = x==null||x==='', yn = y==null||y==='';
+  if(xn&&yn) return 0; if(xn) return 1; if(yn) return -1;   // blanks last
+  return typeof x==='string' ? x.localeCompare(y) : x-y;
+}
+const blank = v => v==null || v==='';
+function sorter(a,b,k,dir){
+  const ab=blank(a[k]), bb=blank(b[k]);
+  if(ab!==bb) return ab?1:-1;            // blanks always last
+  return (cmp(a,b,k)*dir) || a.name.localeCompare(b.name);
+}
+function head(cols, view){
+  const [k,dir] = F.sort[view];
+  return '<tr>'+cols.map(([key,l])=>'<th scope="col" aria-sort="'+(k===key?(dir>0?'ascending':'descending'):'none')+'"><button type="button" data-sort="'+key+'">'+l+(k===key?'<span class="arr">'+(dir>0?'↑':'↓')+'</span>':'')+'</button></th>').join('')+'</tr>';
+}
+
+let current = [];
+function renderRecords(base){
+  const rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+  const [k,dir] = F.sort.rec;
+  rows.sort((a,b)=>sorter(a,b,k,dir));
+  current = rows;
+  $('tbl').querySelector('thead').innerHTML = head(recCols,'rec');
+  const body = rows.slice(0,shown).map(r=>{
+    const s = STMAP[r.st];
+    const days = r.days==null ? '' : (r.days<0 ? '−'+Math.abs(r.days) : r.days);
+    const tint = TINT[r.st];
+    return '<tr class="'+(r.old?'old':'')+(tint?' tint':'')+'"'+(tint?' style="--c:var('+s.c+');--t:'+tint+'%"':'')+'>'+
+      '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="Filter to this employee">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||'No ID')+'</span></td>'+
+      '<td>'+esc(r.loc)+'</td><td>'+esc(r.role)+'</td>'+
+      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
+      '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
+      '<td class="num">'+days+'</td>'+
+      '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td></tr>';
+  }).join('');
+  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="8"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
+  $('count').textContent = rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
+  $('more').hidden = rows.length<=shown;
+  $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
+}
+
+const empCols = [['name','Employee'],['loc','Location'],['role','Role'],['expired','Expired'],['d30','≤30 days'],['d60','31–60'],['d90','61–90'],['notdone','Not done'],['failed','Failed'],['current','Current'],['total','Total']];
+function renderEmployees(base){
+  const rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+  const m = new Map();
+  rows.forEach(r=>{
+    let e = m.get(r.empKey);
+    if(!e){ e={key:r.empKey,name:r.name,id:r.id,loc:r.loc,role:r.role,total:0}; ST.forEach(s=>e[s.k]=0); m.set(r.empKey,e); }
+    e[r.st]++; if(r.st!=='none') e.total++;
+  });
+  const emps = [...m.values()];
+  const [k,dir] = F.sort.emp;
+  emps.sort((a,b)=>sorter(a,b,k,dir));
+  current = emps;
+  $('tbl').querySelector('thead').innerHTML = head(empCols,'emp');
+  const cell = (e,k) => '<td class="cnt'+(e[k]?'':' z')+'">'+(e[k]?'<b style="--c:var('+STMAP[k].c+')">'+e[k]+'</b>':'0')+'</td>';
+  $('tbl').querySelector('tbody').innerHTML = emps.slice(0,shown).map(e=>
+    '<tr><td><button type="button" class="who" data-emp="'+esc(e.key)+'" title="Show records for this employee">'+esc(e.name)+'</button><span class="sub">'+esc(e.id||'No ID')+'</span></td><td>'+esc(e.loc)+'</td><td>'+esc(e.role)+'</td>'+
+    ['expired','d30','d60','d90','notdone','failed','current'].map(k=>cell(e,k)).join('')+
+    '<td class="cnt">'+(e.total||'<span class="sub" style="display:inline">none</span>')+'</td></tr>').join('')
+    || '<tr><td colspan="11"><div class="empty">No employees match these filters.</div></td></tr>';
+  $('count').textContent = emps.length.toLocaleString()+' employee'+(emps.length===1?'':'s');
+  $('more').hidden = emps.length<=shown;
+  $('morebtn').textContent = 'Show '+Math.min(PAGE,emps.length-shown)+' more of '+(emps.length-shown).toLocaleString()+' remaining';
+}
+
+function render(){
+  const base = baseRows();
+  renderTiles(base); renderLocs(base); chips(); msButtons();
+  $('v-rec').setAttribute('aria-pressed', F.view==='rec');
+  $('v-emp').setAttribute('aria-pressed', F.view==='emp');
+  F.view==='emp' ? renderEmployees(base) : renderRecords(base);
+  save();
+}
+const reset = () => { shown = PAGE; render(); };
+
+// events
+$('f-old').addEventListener('change',e=>{F.old=e.target.checked; reset();});
+$('f-clear').addEventListener('click',()=>{ MS.forEach(k=>F[k]=[]); F.st=[]; closePop(); reset(); });
+function setTab(t){ F.tab=t; ['results','overview'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); }); save(); }
+$('t-results').addEventListener('click',()=>setTab('results'));
+$('t-overview').addEventListener('click',()=>setTab('overview'));
+$('stchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
+setTab(F.tab==='overview'?'overview':'results');
+$('tiles').addEventListener('click',e=>{ const b=e.target.closest('.tile'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
+$('locs').addEventListener('click',e=>{ const b=e.target.closest('.locrow'); if(!b) return; const l=b.dataset.loc; F.loc = F.loc.includes(l)?F.loc.filter(x=>x!==l):[...F.loc,l]; reset(); });
+$('activechips').addEventListener('click',e=>{ const b=e.target.closest('[data-rm]'); if(!b) return; const k=b.dataset.rm, i=k.indexOf(':'), f=k.slice(0,i), v=k.slice(i+1);
+  F[f]=F[f].filter(x=>x!==v); reset(); });
+$('v-rec').addEventListener('click',()=>{F.view='rec'; reset();});
+$('v-emp').addEventListener('click',()=>{F.view='emp'; reset();});
+$('morebtn').addEventListener('click',()=>{ shown+=PAGE; render(); });
+$('tbl').addEventListener('click',e=>{
+  const s=e.target.closest('[data-sort]');
+  if(s){ const v=F.view, k=s.dataset.sort; const [ck,cd]=F.sort[v]; F.sort[v] = [k, ck===k ? -cd : (['expired','d30','d60','d90','notdone','failed','current','total'].includes(k)?-1:1)]; reset(); return; }
+  const w=e.target.closest('[data-emp]');
+  if(w){ const v=w.dataset.emp; if(!F.emp.includes(v)) F.emp=[...F.emp,v]; F.view='rec'; setTab('results'); reset(); window.scrollTo({top:0,behavior:'smooth'}); }
+});
+
+// CSV export: plain browser download
+(function(){
+  const btn = $('export'); btn.hidden = false;
+  btn.addEventListener('click', ()=>{
+    const q = v => { v = v==null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
+    let lines;
+    if(F.view==='emp'){
+      lines = [['Employee ID','Name','Location','Role','Expired','Expires 30 days','Expires 31-60','Expires 61-90','Not completed','Failed','Current','Total']]
+        .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.expired,e.d30,e.d60,e.d90,e.notdone,e.failed,e.current,e.total]));
+    } else {
+      lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Replaced by retake']]
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],r.old?'Yes':'']));
+    }
+    const csv = lines.map(l=>l.map(q).join(',')).join('\r\n');
+    const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
+    const a = document.createElement('a');
+    a.href = url; a.download = 'Training_'+(F.view==='emp'?'Employees':'Records')+'_'+isoD(today)+'.csv';
+    document.body.appendChild(a); a.click(); a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 1000);
+  });
+})();
+
+$('legend').innerHTML = ST.filter(s=>s.k!=='none').map(s=>'<span><i style="--c:var('+s.c+')"></i>'+short[s.k]+'</span>').join('');
+
+// ---------- load + unlock ----------
+const PASSKEY = 'evtd-pass-v1';
+const b64 = t => Uint8Array.from(atob(t), c=>c.charCodeAt(0));
+async function unlock(enc, pass){
+  const base = await crypto.subtle.importKey('raw', new TextEncoder().encode(pass), 'PBKDF2', false, ['deriveKey']);
+  const key = await crypto.subtle.deriveKey({name:'PBKDF2', salt:b64(enc.salt), iterations:enc.iter, hash:'SHA-256'},
+    base, {name:'AES-GCM', length:256}, false, ['decrypt']);
+  const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:b64(enc.iv)}, key, b64(enc.data));
+  return JSON.parse(new TextDecoder().decode(plain));
+}
+function start(data){
+  $('gate').hidden = true; $('app').hidden = false;
+  build(data); setupMS(); render();
+  const g = new Date(data.generated);
+  const ageH = (Date.now()-g.getTime())/3600000;
+  $('fresh').innerHTML = '<span>Data refreshed <b>'+g.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</b></span>'+
+    '<span>'+RECS.length.toLocaleString()+' records · '+new Set(RECS.map(r=>r.empKey)).size.toLocaleString()+' employees</span>'+
+    (ageH>36?'<span class="stale">This data is more than a day old.</span>':'');
+}
+function failLoad(){
+  $('gate').hidden = true; $('app').hidden = false;
+  $('fresh').innerHTML='<span>Data unavailable</span>';
+  const n=$('loaderr'); n.hidden=false; n.textContent='The training data could not be loaded. Reload the page; if it still fails, let Kirby know the dashboard data needs a refresh.';
+}
+fetch('data.enc.json',{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(async enc=>{
+  let saved = null; try{ saved = localStorage.getItem(PASSKEY); }catch(e){}
+  if(saved){ try{ start(await unlock(enc, saved)); return; }catch(e){ try{ localStorage.removeItem(PASSKEY); }catch(x){} } }
+  $('gate').hidden = false; $('pass').focus();
+  $('gateform').addEventListener('submit', async ev=>{
+    ev.preventDefault();
+    const pass = $('pass').value;
+    $('gateerr').textContent = 'Checking…';
+    try{
+      const data = await unlock(enc, pass);
+      try{ localStorage.setItem(PASSKEY, pass); }catch(e){}
+      start(data);
+    }catch(e){ $('gateerr').textContent = 'That passcode didn\'t work. Try again.'; $('pass').select(); }
+  });
+}).catch(failLoad);
+})();
+</script>
+
+</body></html>
