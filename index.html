@@ -595,7 +595,12 @@ function failLoad(){
   $('fresh').innerHTML='<span>Data unavailable</span>';
   const n=$('loaderr'); n.hidden=false; n.textContent='The training data could not be loaded. Reload the page; if it still fails, let Kirby know the dashboard data needs a refresh.';
 }
-fetch('data.enc.json',{cache:'no-store'}).then(r=>{ if(!r.ok) throw new Error(r.status); return r.json(); }).then(async enc=>{
+fetch('data.enc.json',{cache:'no-store'}).then(r=>{
+  if(r.ok) return r.json();
+  // No passcode set: the data is published unlocked.
+  return fetch('data.json',{cache:'no-store'}).then(r2=>{ if(!r2.ok) throw new Error(r2.status); return r2.json(); }).then(data=>{ start(data); return null; });
+}).then(async enc=>{
+  if(!enc) return;
   let saved = null; try{ saved = localStorage.getItem(PASSKEY); }catch(e){}
   if(saved){ try{ start(await unlock(enc, saved)); return; }catch(e){ try{ localStorage.removeItem(PASSKEY); }catch(x){} } }
   $('gate').hidden = false; $('pass').focus();

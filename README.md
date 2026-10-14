@@ -5,8 +5,10 @@ Each morning (~6:45 AM Central) the **Training Dashboard** workflow gets the Tra
 file from SharePoint, rebuilds the dashboard, and publishes it to GitHub Pages at
 **https://envirovac-vecta.github.io/training-dashboard/**.
 
-The training data is locked with a passcode. People enter it once and their browser remembers it.
-Each person's filters are their own. Nothing in this repo contains readable employee data.
+Anyone with the link can open it. Each person's filters are their own.
+Optional passcode: add the `DASHBOARD_PASSCODE` secret and run the workflow, and the page will ask
+for it (people enter it once; their browser remembers it). Delete the secret to turn it off again.
+No training data is stored in this repo; it only goes into the published site.
 
 | File | What it does |
 |---|---|
@@ -24,12 +26,12 @@ Each person's filters are their own. Nothing in this repo contains readable empl
    | Secret | What |
    |---|---|
    | `TRAINING_SUMMARY_URL` | the flow's HTTP URL from step 1 |
-   | `DASHBOARD_PASSCODE` | the passcode viewers type (use a phrase, not a short number) |
+   | `DASHBOARD_PASSCODE` | optional - only if you want a passcode (use a phrase, not a short number) |
 3. **Pages**: Settings → Pages → Build and deployment → Source: **GitHub Actions**.
 4. Actions → **Training Dashboard** → **Run workflow**.
 
 ## Notes
-- Change the passcode: update `DASHBOARD_PASSCODE` and run the workflow. Everyone enters the new one.
+- Passcode on/off: add or delete `DASHBOARD_PASSCODE`, then run the workflow.
 - Change the time: edit the `cron` line in the workflow (UTC; Central = UTC−5 summer, UTC−6 winter).
 - The Training Summary file must keep these column headers: Employee ID, Name, Role, Location,
   Course Name, Score, Date Assigned, Date Completed, Date Expire, Status.

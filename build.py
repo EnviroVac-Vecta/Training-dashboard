@@ -5,9 +5,9 @@
    file itself). For a local test, pass a file path instead:
        python build.py "Training Summary.xlsx"
 2. Turns the rows into the dashboard's data format.
-3. Locks the data with DASHBOARD_PASSCODE (AES-GCM) so the public web page
-   only shows it to people who have the passcode.
-4. Writes the finished site to site/ (index.html + data.enc.json).
+3. If the DASHBOARD_PASSCODE secret is set, locks the data with it (AES-GCM)
+   so the page asks for the passcode. Without it, the data is published open.
+4. Writes the finished site to site/.
 """
 import io
 import os
@@ -162,8 +162,6 @@ def encrypt(obj, passcode):
 def main():
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
-    if not passcode:
-        raise SystemExit("Missing GitHub secret: DASHBOARD_PASSCODE")
 
     cols, rows = read_rows(get_file())
     if not rows:
@@ -175,8 +173,14 @@ def main():
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     shutil.copy(os.path.join(HERE, "index.html"), os.path.join(OUT, "index.html"))
-    with open(os.path.join(OUT, "data.enc.json"), "w") as f:
-        json.dump(encrypt(data, passcode), f)
+    if passcode:
+        with open(os.path.join(OUT, "data.enc.json"), "w") as f:
+            json.dump(encrypt(data, passcode), f)
+        print("Data locked with DASHBOARD_PASSCODE.")
+    else:
+        with open(os.path.join(OUT, "data.json"), "w") as f:
+            json.dump(data, f, separators=(",", ":"))
+        print("No DASHBOARD_PASSCODE secret: publishing without a passcode.")
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees")
