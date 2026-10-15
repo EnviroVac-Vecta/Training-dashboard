@@ -113,6 +113,38 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .bar span{height:100%;background:var(--c)}
 .loctot{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 
+/* plant-site readiness (TAPPISAFE) */
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent);flex:none;vertical-align:middle}
+.sitebar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 10px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px}
+.sitebar .what{font-size:12.5px;color:var(--muted);flex:1 1 260px;min-width:0}
+.sitebar .what b{color:var(--fg)}
+.light{font:inherit;display:inline-flex;align-items:center;gap:8px;padding:5px 12px 5px 9px;border-radius:999px;border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;font-size:12.5px}
+.light b{font-family:var(--f-mono);font-weight:600;font-variant-numeric:tabular-nums}
+.light:hover{border-color:var(--c)}
+.light[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 15%,var(--surface))}
+.lights.dim .light[aria-pressed="false"]{opacity:.55}
+.lights{display:flex;flex-wrap:wrap;gap:6px}
+td.ready{white-space:nowrap;width:1%}
+td.ready .dot+.dot{margin-left:8px}
+.src{font-size:10px;font-family:var(--f-mono);color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:6px;white-space:nowrap}
+/* employee card */
+.card-bg{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--fg) 35%,transparent);display:flex;justify-content:flex-end}
+.card{background:var(--bg);width:min(560px,100%);height:100%;overflow-y:auto;padding:20px max(20px,env(safe-area-inset-right,0px)) calc(24px + env(safe-area-inset-bottom,0px)) 20px;display:flex;flex-direction:column;gap:14px;box-shadow:-10px 0 30px color-mix(in srgb,var(--fg) 25%,transparent)}
+.card-top{display:flex;justify-content:space-between;align-items:flex-start;gap:10px}
+.card h2{font-family:var(--f-display);font-stretch:85%;font-size:24px;margin:0;line-height:1.1}
+.card .sub{margin-top:2px}
+.card-x{font:inherit;font-size:22px;line-height:1;border:1px solid var(--line);background:var(--surface);color:var(--fg);border-radius:var(--radius);width:38px;height:38px;cursor:pointer;flex:none}
+.card section{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.card h3{font-size:13px;margin:0;display:flex;align-items:center;gap:8px;font-weight:600}
+.card h3 .lbl{font-weight:500;color:var(--muted);font-size:12px;margin-left:auto}
+.reqlist{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.reqlist li{display:grid;grid-template-columns:16px minmax(0,1fr);gap:8px;align-items:start;font-size:13px}
+.reqlist li .dot{width:10px;height:10px;margin-top:4px}
+.reqlist .st{display:block;font-family:var(--f-mono);font-size:11.5px;color:var(--c)}
+.reqlist small{display:block;font-size:11px;color:var(--muted)}
+.card .recs{width:100%;min-width:0;font-size:12.5px}
+.card .recs td{padding:5px 6px}
+
 /* table */
 .tablebar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -202,6 +234,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       </div>
       <div class="chiprow"><span class="count" id="count"></span><button class="btn" id="export" type="button" hidden>Export CSV</button></div>
     </div>
+    <div class="sitebar" id="sitebar" hidden></div>
     <div class="tablewrap"><table id="tbl"><thead></thead><tbody></tbody></table></div>
     <div class="more" id="more" hidden><button class="btn" type="button" id="morebtn">Show more</button></div>
   </div>
@@ -217,11 +250,14 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     </section>
   </div>
 
+  <div class="card-bg" id="cardbg" hidden><aside class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="card-name"></aside></div>
+
   <footer>
-    Statuses are worked out from the expiration date in the HSI export. When an employee has retaken a course, the newest completion counts and older records for that course are hidden unless you turn them on in Results. Your filters are your own; nobody else sees them change.
+    Statuses are worked out from the expiration date in the HSI export (and, for plant-site courses, the TAPPISAFE export). When an employee has retaken a course, the newest completion counts and older records for that course are hidden unless you turn them on in Results. Your filters are your own; nobody else sees them change.
   </footer>
 </div>
 
+<script src="plants.js"></script>
 <script>
 (function(){
 const ST = [
@@ -285,6 +321,7 @@ function build(data){
     r.hay = (r.name+' '+r.id+' '+r.course).toLowerCase();
     return r;
   });
+  if(data.tappi && data.tappi.rows) addTappi(data.tappi);
   // A blank "no course" row only means something when the employee has no other records.
   const hasCourse = new Set(RECS.filter(r=>r.course).map(r=>r.empKey));
   RECS = RECS.filter(r=>r.course || !hasCourse.has(r.empKey));
@@ -309,6 +346,88 @@ function build(data){
     }
   });
 }
+
+// ---------- TAPPISAFE records (plant-site orientations) ----------
+const nameKey = n => { n=String(n||''); if(n.includes(',')){ const [l,f]=n.split(','); n=f+' '+l; }
+  const t=n.toLowerCase().replace(/[^a-z ]/g,' ').split(/\s+/).filter(x=>x.length>1); return t.length? t[0]+' '+t[t.length-1] : ''; };
+const MILLS = new Map();   // mk -> {mk, name, psm}
+function addTappi(tp){
+  const ci = Object.fromEntries(tp.cols.map((c,i)=>[c,i]));
+  const hsi = new Map(); RECS.forEach(r=>{ const k=nameKey(r.name); if(k && !hsi.has(k)) hsi.set(k, r); });
+  tp.rows.forEach(row=>{
+    const course = String(row[ci.course]||'').replace(/\s*\([^)]*\)\s*$/,'').trim();
+    const plant = window.PLANT ? window.PLANT.classify(course) : null;
+    if(!plant) return;   // general TAPPISAFE 101 courses etc. stay out
+    const tname = (String(row[ci.first]||'')+' '+String(row[ci.last]||'')).replace(/\s*,\s*/g,' ').replace(/\s+/g,' ').trim();
+    const h = hsi.get(nameKey(tname));
+    const r = {
+      i: RECS.length, id: h ? h.id : '', name: h ? h.name : tname, role: h ? h.role : 'Not set',
+      loc: h ? h.loc : 'Not matched to HSI', course: plant.name, score: null, assigned: null,
+      completed: parseD(row[ci.date]), expire: parseD(row[ci.exp]),
+      src: /^\(P\)|pass/i.test(String(row[ci.grade]||'')) ? 'Completed' : 'Failed', old:false, retakes:0,
+      source:'TAPPI', tappiId: String(row[ci.id]||''), plant
+    };
+    r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
+    r.st = classify(r);
+    r.empKey = h ? h.empKey : 'TAPPI '+(r.tappiId || tname);
+    r.hay = (r.name+' '+r.id+' '+r.tappiId+' '+r.course).toLowerCase();
+    RECS.push(r);
+    if(plant.mill){ const m = MILLS.get(plant.mk) || MILLS.set(plant.mk,{mk:plant.mk, name:plant.mill, psm:false}).get(plant.mk);
+      if(plant.kind==='psm'||plant.kind==='millpsm') m.psm = true; }
+  });
+}
+// Mills whose courses are picked in the Course filter.
+function selMills(){
+  const out = new Map();
+  F.course.forEach(c=>{ const p = window.PLANT && window.PLANT.classify(c); if(p && p.mill && MILLS.has(p.mk)) out.set(p.mk, MILLS.get(p.mk)); });
+  return [...out.values()];
+}
+let BYEMP = null;
+function empRecs(key){ if(!BYEMP){ BYEMP = new Map(); RECS.forEach(r=>{ (BYEMP.get(r.empKey)||BYEMP.set(r.empKey,[]).get(r.empKey)).push(r); }); } return BYEMP.get(key)||[]; }
+const RCACHE = new Map();
+function ready(key, mill){ const k=key+'|'+mill.mk; if(!RCACHE.has(k)) RCACHE.set(k, window.PLANT.readiness(empRecs(key), mill, today)); return RCACHE.get(k); }
+function worst(key, mills){ return mills.map(m=>ready(key,m).light).reduce((a,l)=>window.PLANT.RANK[l]>window.PLANT.RANK[a]?l:a,'green'); }
+let LIGHTF = [];
+function dots(key, mills){ const L=window.PLANT.LIGHT; return mills.map(m=>{ const l=ready(key,m).light; return '<i class="dot" style="--c:var('+L[l].c+')" title="'+esc(m.name+': '+L[l].label)+'"></i>'; }).join(''); }
+function renderSiteBar(base){
+  const mills = selMills(), bar = $('sitebar');
+  if(!mills.length){ bar.hidden = true; LIGHTF = []; return mills; }
+  const L = window.PLANT.LIGHT, n = {green:0,yellow:0,red:0};
+  [...new Set(base.map(r=>r.empKey))].forEach(k=>n[worst(k,mills)]++);
+  bar.hidden = false;
+  bar.innerHTML = '<span class="what"><b>'+esc(mills.map(m=>m.name+(m.psm?' (PSM)':'')).join(', '))+'</b>: ready means TAPPISAFE Basic or Basic Refresher, the mill orientation'+(mills.some(m=>m.psm)?', and the PSM orientation where the mill has one':'')+', all passed and not expired. Click a name to see what is missing.</span>'+
+    '<span class="lights'+(LIGHTF.length?' dim':'')+'">'+['green','yellow','red'].map(k=>'<button type="button" class="light" data-light="'+k+'" aria-pressed="'+LIGHTF.includes(k)+'" style="--c:var('+L[k].c+')"><i class="dot"></i>'+L[k].label+' <b>'+n[k]+'</b></button>').join('')+'</span>';
+  return mills;
+}
+
+// ---------- employee card ----------
+function openCard(key){
+  const recs = empRecs(key); if(!recs.length) return;
+  const r0 = recs.find(r=>r.source!=='TAPPI') || recs[0], L = window.PLANT.LIGHT;
+  const tid = (recs.find(r=>r.tappiId)||{}).tappiId;
+  let mills = selMills();
+  if(!mills.length){ // no plant course picked: show every mill this person has a TAPPI record for
+    mills = [...new Set(recs.filter(r=>r.plant&&r.plant.mk).map(r=>r.plant.mk))].map(k=>MILLS.get(k)).filter(Boolean);
+  }
+  let h = '<div class="card-top"><div><h2 id="card-name">'+esc(r0.name)+'</h2><span class="sub">'+esc([r0.id||(tid?'':'No ID'), tid?'TAPPI '+tid:'', r0.loc, r0.role==='Not set'?'':r0.role].filter(Boolean).join(' · '))+'</span></div>'+
+    '<button type="button" class="card-x" id="card-x" aria-label="Close">×</button></div>';
+  mills.forEach(m=>{
+    const rd = ready(key,m);
+    h += '<section><h3><i class="dot" style="--c:var('+L[rd.light].c+')"></i>'+esc(m.name)+(m.psm?' (PSM)':'')+'<span class="lbl">'+L[rd.light].label+'</span></h3><ul class="reqlist">'+
+      rd.reqs.map(q=>'<li style="--c:var('+L[q.s].c+')"><i class="dot"></i><span>'+esc(q.label)+'<span class="st">'+esc(q.text)+'</span>'+(q.rec?'<small>'+esc(q.rec.course)+'</small>':'')+'</span></li>').join('')+'</ul></section>';
+  });
+  const cur = recs.filter(r=>!r.old && r.course).sort((a,b)=>stOrder[a.st]-stOrder[b.st] || a.course.localeCompare(b.course));
+  h += '<section><h3>All training on file<span class="lbl">'+cur.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
+    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
+    '</tbody></table></div></section>';
+  h += '<div><button type="button" class="btn" id="card-filter">Show only this employee\'s records</button></div>';
+  $('card').innerHTML = h; $('cardbg').hidden = false; $('card-x').focus();
+  $('card-x').onclick = closeCard;
+  $('card-filter').onclick = ()=>{ if(!F.emp.includes(key)) F.emp=[...F.emp,key]; F.view='rec'; closeCard(); reset(); window.scrollTo({top:0,behavior:'smooth'}); };
+}
+function closeCard(){ $('cardbg').hidden = true; }
+$('cardbg').addEventListener('click', e=>{ if(e.target===$('cardbg')) closeCard(); });
+document.addEventListener('keydown', e=>{ if(e.key==='Escape' && !$('cardbg').hidden) closeCard(); });
 
 // ---------- multi-select filters ----------
 const MSDEF = {
@@ -466,33 +585,36 @@ function head(cols, view){
 }
 
 let current = [];
-function renderRecords(base){
-  const rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+function renderRecords(base, mills){
+  let rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+  if(mills.length && LIGHTF.length) rows = rows.filter(r=>LIGHTF.includes(worst(r.empKey,mills)));
   const [k,dir] = F.sort.rec;
   rows.sort((a,b)=>sorter(a,b,k,dir));
   current = rows;
-  $('tbl').querySelector('thead').innerHTML = head(recCols,'rec');
+  $('tbl').querySelector('thead').innerHTML = head(recCols,'rec').replace('<tr>', mills.length?'<tr><th scope="col" title="Plant-site readiness"><button type="button" disabled>Site</button></th>':'<tr>');
   const body = rows.slice(0,shown).map(r=>{
     const s = STMAP[r.st];
     const days = r.days==null ? '' : (r.days<0 ? '−'+Math.abs(r.days) : r.days);
     const tint = TINT[r.st];
     return '<tr class="'+(r.old?'old':'')+(tint?' tint':'')+'"'+(tint?' style="--c:var('+s.c+');--t:'+tint+'%"':'')+'>'+
-      '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="Filter to this employee">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||'No ID')+'</span></td>'+
+      (mills.length?'<td class="ready">'+dots(r.empKey,mills)+'</td>':'')+
+      '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||(r.tappiId?'TAPPI '+r.tappiId:'No ID'))+'</span></td>'+
       '<td>'+esc(r.loc)+'</td><td>'+esc(r.role)+'</td>'+
-      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
+      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td></tr>';
   }).join('');
-  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="8"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
+  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(8+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
   $('more').hidden = rows.length<=shown;
   $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
 }
 
 const empCols = [['name','Employee'],['loc','Location'],['role','Role'],['expired','Expired'],['d30','≤30 days'],['d60','31–60'],['d90','61–90'],['notdone','Not done'],['failed','Failed'],['current','Current'],['total','Total']];
-function renderEmployees(base){
-  const rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+function renderEmployees(base, mills){
+  let rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
+  if(mills.length && LIGHTF.length) rows = rows.filter(r=>LIGHTF.includes(worst(r.empKey,mills)));
   const m = new Map();
   rows.forEach(r=>{
     let e = m.get(r.empKey);
@@ -503,10 +625,10 @@ function renderEmployees(base){
   const [k,dir] = F.sort.emp;
   emps.sort((a,b)=>sorter(a,b,k,dir));
   current = emps;
-  $('tbl').querySelector('thead').innerHTML = head(empCols,'emp');
+  $('tbl').querySelector('thead').innerHTML = head(empCols,'emp').replace('<tr>', mills.length?'<tr><th scope="col"><button type="button" disabled>Site</button></th>':'<tr>');
   const cell = (e,k) => '<td class="cnt'+(e[k]?'':' z')+'">'+(e[k]?'<b style="--c:var('+STMAP[k].c+')">'+e[k]+'</b>':'0')+'</td>';
   $('tbl').querySelector('tbody').innerHTML = emps.slice(0,shown).map(e=>
-    '<tr><td><button type="button" class="who" data-emp="'+esc(e.key)+'" title="Show records for this employee">'+esc(e.name)+'</button><span class="sub">'+esc(e.id||'No ID')+'</span></td><td>'+esc(e.loc)+'</td><td>'+esc(e.role)+'</td>'+
+    '<tr>'+(mills.length?'<td class="ready">'+dots(e.key,mills)+'</td>':'')+'<td><button type="button" class="who" data-emp="'+esc(e.key)+'" title="See this employee\'s training">'+esc(e.name)+'</button><span class="sub">'+esc(e.id||'No ID')+'</span></td><td>'+esc(e.loc)+'</td><td>'+esc(e.role)+'</td>'+
     ['expired','d30','d60','d90','notdone','failed','current'].map(k=>cell(e,k)).join('')+
     '<td class="cnt">'+(e.total||'<span class="sub" style="display:inline">none</span>')+'</td></tr>').join('')
     || '<tr><td colspan="11"><div class="empty">No employees match these filters.</div></td></tr>';
@@ -520,7 +642,8 @@ function render(){
   renderTiles(base); renderLocs(base); chips(); msButtons();
   $('v-rec').setAttribute('aria-pressed', F.view==='rec');
   $('v-emp').setAttribute('aria-pressed', F.view==='emp');
-  F.view==='emp' ? renderEmployees(base) : renderRecords(base);
+  const mills = renderSiteBar(base);
+  F.view==='emp' ? renderEmployees(base, mills) : renderRecords(base, mills);
   save();
 }
 const reset = () => { shown = PAGE; render(); };
@@ -540,11 +663,12 @@ $('activechips').addEventListener('click',e=>{ const b=e.target.closest('[data-r
 $('v-rec').addEventListener('click',()=>{F.view='rec'; reset();});
 $('v-emp').addEventListener('click',()=>{F.view='emp'; reset();});
 $('morebtn').addEventListener('click',()=>{ shown+=PAGE; render(); });
+$('sitebar').addEventListener('click',e=>{ const b=e.target.closest('[data-light]'); if(!b) return; const k=b.dataset.light; LIGHTF = LIGHTF.includes(k)? LIGHTF.filter(x=>x!==k) : [...LIGHTF,k]; reset(); });
 $('tbl').addEventListener('click',e=>{
   const s=e.target.closest('[data-sort]');
   if(s){ const v=F.view, k=s.dataset.sort; const [ck,cd]=F.sort[v]; F.sort[v] = [k, ck===k ? -cd : (['expired','d30','d60','d90','notdone','failed','current','total'].includes(k)?-1:1)]; reset(); return; }
   const w=e.target.closest('[data-emp]');
-  if(w){ const v=w.dataset.emp; if(!F.emp.includes(v)) F.emp=[...F.emp,v]; F.view='rec'; setTab('results'); reset(); window.scrollTo({top:0,behavior:'smooth'}); }
+  if(w) openCard(w.dataset.emp);
 });
 
 // CSV export: plain browser download
@@ -559,6 +683,13 @@ $('tbl').addEventListener('click',e=>{
     } else {
       lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Replaced by retake']]
         .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],r.old?'Yes':'']));
+    }
+    // With a plant-site course picked, add the readiness and what is missing for each mill.
+    const mills = selMills();
+    if(mills.length){
+      lines[0] = lines[0].concat(mills.flatMap(m=>[m.name+' ready', m.name+' missing']));
+      lines = [lines[0]].concat(current.map((x,i)=>lines[i+1].concat(mills.flatMap(m=>{ const rd=ready(x.empKey||x.key,m);
+        return [window.PLANT.LIGHT[rd.light].label, rd.reqs.filter(t=>t.s!=='green').map(t=>t.label+': '+t.text).join('; ')]; }))));
     }
     const csv = lines.map(l=>l.map(q).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));

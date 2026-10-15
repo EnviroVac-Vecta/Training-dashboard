@@ -159,6 +159,55 @@ def encrypt(obj, passcode):
     return {"v": 1, "iter": ITERATIONS, "salt": b(salt), "iv": b(iv), "data": b(data)}
 
 
+TAPPI_COLUMNS = {"first": ["firstname"], "last": ["lastname"], "id": ["studentid"], "course": ["description", "course", "coursename"],
+                 "date": ["classdate", "datecompleted"], "exp": ["expirationdate", "expiredate"], "grade": ["grade", "result"]}
+
+
+def fetch_xlsx(secret_name, label):
+    """Post to a Power Automate flow that answers with an Excel file. None if the secret isn't set."""
+    secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
+    url = secrets.get(secret_name) or os.environ.get(secret_name)
+    if not url:
+        return None
+    res = requests.post(url, json={}, timeout=180)
+    body = res.content
+    if res.status_code == 200 and not body.startswith(b"PK"):
+        try:
+            j = res.json()
+            body = base64.b64decode(j.get("$content") or j.get("fileContent") or j.get("body", {}).get("$content"))
+        except Exception:
+            pass
+    if res.status_code != 200 or not body.startswith(b"PK"):
+        print(f"::warning title={label}::The {label} flow didn't send back an Excel file (status {res.status_code}); skipping it.")
+        return None
+    return body
+
+
+def read_tappi(xlsx_bytes):
+    """TAPPISAFE Student Attendance export -> compact rows for the Plant Sites tab."""
+    wb = load_workbook(io.BytesIO(xlsx_bytes), read_only=True, data_only=True)
+    ws = wb.worksheets[0]
+    rows = list(ws.iter_rows(values_only=True))
+    for h, row in enumerate(rows[:15]):
+        headers = [norm(c) for c in row]
+        found = {k: next((headers.index(n) for n in names if n in headers), None) for k, names in TAPPI_COLUMNS.items()}
+        if found["course"] is not None and found["last"] is not None:
+            break
+    else:
+        print("::warning title=TAPPI::Couldn't find the header row in the TAPPI file; skipping the Plant Sites tab.")
+        return None
+    cols = list(TAPPI_COLUMNS)
+    out = []
+    for r in rows[h + 1:]:
+        g = lambda k: r[found[k]] if found[k] is not None and found[k] < len(r) else None
+        if not g("course") or not g("last"):
+            continue
+        out.append([str(g("first") or "").strip(), str(g("last") or "").strip(), str(g("id") or "").strip(),
+                    str(g("course")).strip(), iso(g("date")), iso(g("exp")), str(g("grade") or "").strip()])
+    print(f"TAPPI: {len(out):,} course records.")
+    return {"cols": cols, "rows": out}
+
+
 def main():
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
@@ -170,9 +219,16 @@ def main():
     print(f"{len(rows):,} training rows for {people:,} employees.")
 
     data = {"generated": datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ"), "cols": cols, "rows": rows}
+    # Plant Sites tab: the TAPPISAFE attendance file (Tappi Raw Data), when its flow is set up.
+    tappi_path = os.environ.get("TAPPI_FILE")
+    tappi_bytes = open(tappi_path, "rb").read() if tappi_path else fetch_xlsx("TAPPI_URL", "TAPPI")
+    tappi = read_tappi(tappi_bytes) if tappi_bytes else None
+    if tappi:
+        data["tappi"] = tappi
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
-    shutil.copy(os.path.join(HERE, "index.html"), os.path.join(OUT, "index.html"))
+    for name in ("index.html", "plants.js"):
+        shutil.copy(os.path.join(HERE, name), os.path.join(OUT, name))
     if passcode:
         with open(os.path.join(OUT, "data.enc.json"), "w") as f:
             json.dump(encrypt(data, passcode), f)
@@ -183,7 +239,8 @@ def main():
         print("No DASHBOARD_PASSCODE secret: publishing without a passcode.")
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
-    print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees")
+    print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees"
+          + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file (Plant Sites tab hidden)"))
 
 
 if __name__ == "__main__":
