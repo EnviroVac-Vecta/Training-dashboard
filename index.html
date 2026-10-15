@@ -406,7 +406,7 @@ function renderSiteBar(base){
 }
 
 // Medical items (fit test, blood panel, exam, PFT, audiogram) are requirements, not courses.
-const MEDICAL = /respirator fit|fit[- ]?test|heavy metal|blood panel|medical exam|physical exam|\bPFTs?\b|pulmonary function|audiogram|hearing test/i;
+const MEDICAL = /respirator fit|fit[- ]?test|heavy metal|blood panel|medical exam|physical exam|\bPFTs?\b|pulmonary function|audiogram|hearing test|rapid meq|respirator clearance/i;
 const medTag = name => MEDICAL.test(name||'') ? '<span class="medical">Medical - Not a Course</span>' : '';
 
 // ---------- Refresher Training (HSI Training Requirement Status) ----------

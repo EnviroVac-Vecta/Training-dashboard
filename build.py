@@ -243,7 +243,7 @@ def read_refresher(xlsx_bytes):
             reqs.append(req)
         out.append([emp_id, (str(g("first") or "").strip() + " " + last).strip(), str(g("team") or "").strip(),
                     reqs.index(req), str(g("status") or "").strip(), iso(g("last_done")), iso(g("window")), iso(g("due"))])
-    med = re.compile(r"respirator fit|fit[- ]?test|heavy metal|blood panel|medical exam|physical exam|\bPFTs?\b|pulmonary function|audiogram|hearing test", re.I)
+    med = re.compile(r"respirator fit|fit[- ]?test|heavy metal|blood panel|medical exam|physical exam|\bPFTs?\b|pulmonary function|audiogram|hearing test|rapid meq|respirator clearance", re.I)
     print("::notice title=Medical requirements::" + "; ".join(q for q in reqs if med.search(q)))
     print("::notice title=All refresher requirements::" + "; ".join(reqs)[:3500])
     print(f"::notice title=Refresher::{len(out):,} requirement rows, {len(reqs)} requirements; left out {skipped} rows for test accounts.")
