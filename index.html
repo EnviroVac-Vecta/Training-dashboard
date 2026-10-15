@@ -126,9 +126,9 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .lights{display:flex;flex-wrap:wrap;gap:6px}
 td.ready{white-space:nowrap;width:1%}
 td.ready .dot+.dot{margin-left:8px}
-.refsel{display:flex;flex-wrap:wrap;gap:6px}
-.refsel select{width:auto;max-width:260px}
-.refsel select.on{border-color:var(--accent);background:var(--accent-soft);font-weight:500}
+.refbar{display:flex;flex-wrap:wrap;align-items:center;gap:8px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px}
+.refbar select{width:auto;max-width:320px}
+.refbar .seg button b{font-family:var(--f-mono);font-weight:500;margin-left:6px;opacity:.8}
 .medical{display:block;font-size:11px;font-weight:600;color:var(--s-failed);margin-top:1px}
 .medical.lvl{color:var(--accent)}
 .src{font-size:10px;font-family:var(--f-mono);color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:6px;white-space:nowrap}
@@ -229,6 +229,11 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
     <div class="stchips" id="stchips" role="group" aria-label="Filter by status"></div>
+    <div class="refbar" id="ref-req-wrap" hidden>
+      <span class="flabel">Compliance group</span>
+      <div class="seg" id="ref-cat" role="group" aria-label="Compliance group"></div>
+      <select id="ref-req" aria-label="Requirement"></select>
+    </div>
     <div class="stchips" id="refchips" role="group" aria-label="Filter refresher status" hidden></div>
     <div class="tablebar">
       <div class="chiprow">
@@ -238,11 +243,6 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
           <button type="button" id="v-emp" aria-pressed="false">By employee</button>
         </div>
         <label class="toggle" id="old-wrap"><input type="checkbox" id="f-old"> Show older records replaced by a retake</label>
-        <div class="refsel" id="ref-req-wrap" hidden>
-          <select id="ref-req" data-cat="ref" aria-label="Refresher requirements"></select>
-          <select id="ref-lu" data-cat="levelup" aria-label="Level Up Trainings"></select>
-          <select id="ref-med" data-cat="medical" aria-label="Medical Trainings"></select>
-        </div>
       </div>
       <div class="chiprow"><span class="count" id="count"></span><button class="btn" id="export" type="button" hidden>Export CSV</button></div>
     </div>
@@ -436,7 +436,8 @@ const refKind = st => /delinquent|training window/i.test(st||'') ? 'due' : REFS.
 const refColor = r => r.notAssigned ? '--s-current' : /delinquent/i.test(r.status||'') ? '--s-expired' : /training window/i.test(r.status||'') ? '--s-d30' : (REFS.find(x=>x.k===r.kind)||REFS[REFS.length-1]).c;
 // Three lists: refresher requirements, Level Up trainings and medical trainings. One is shown at a time.
 let REFST = [], REFCAT = 'ref', REFREQ = '*', REFSORT = ['due',1];
-const REFCATS = {ref:['ref-req','Refresher requirements','All refresher requirements'], levelup:['ref-lu','Level Up Trainings','All Level Up trainings'], medical:['ref-med','Medical Trainings','All medical trainings']};
+// Each group has its own compliance rules, so they are never mixed: pick one group at a time.
+const REFCATS = {ref:['Refresher Training','All refresher requirements'], levelup:['Level Up Trainings','All Level Up trainings'], medical:['Medical Trainings','All medical trainings']};
 function addRefresher(rf){
   REF.reqs = rf.reqs;
   const byId = new Map(); RECS.forEach(r=>{ if(r.id && !byId.has(r.id)) byId.set(r.id, r); });
@@ -455,11 +456,7 @@ function addRefresher(rf){
     return r;
   });
   $('v-ref').hidden = false;
-  Object.entries(REFCATS).forEach(([cat,[id,label,all]])=>{
-    const reqs = [...new Set(REF.rows.filter(r=>r.cat===cat).map(r=>r.req))].sort();
-    $(id).innerHTML = '<option value="">'+label+'</option><option value="*">'+all+' ('+reqs.length+')</option>'+reqs.map(q=>'<option>'+esc(q)+'</option>').join('');
-    $(id).hidden = !reqs.length;
-  });
+
 }
 function refRows(useStatus){
   return REF.rows.filter(r=>{
@@ -476,7 +473,13 @@ function renderRefresher(){
   const all = refRows(false), n = {}; all.forEach(r=>n[r.kind]=(n[r.kind]||0)+1);
   const rc = $('refchips'); rc.classList.toggle('dim', REFST.length>0);
   rc.innerHTML = REFS.filter(x=>x.k!=='other'||n.other).map(x=>'<button type="button" class="stchip" data-k="'+esc(x.k)+'" aria-pressed="'+REFST.includes(x.k)+'" style="--c:var('+x.c+')"><i></i>'+x.label+' <b>'+(n[x.k]||0).toLocaleString()+'</b></button>').join('');
-  Object.entries(REFCATS).forEach(([cat,[id]])=>{ const el=$(id); el.value = cat===REFCAT ? REFREQ : ''; el.classList.toggle('on', cat===REFCAT); });
+  // group buttons (counts follow the Employee / Location / Role filters) and the requirement list for the chosen group
+  const inF = REF.rows.filter(r=>(!F.emp.length||F.emp.includes(r.empKey)) && (!F.loc.length||F.loc.includes(r.loc)) && (!F.role.length||F.role.includes(r.role)));
+  $('ref-cat').innerHTML = Object.entries(REFCATS).map(([cat,[label]])=>'<button type="button" data-cat="'+cat+'" aria-pressed="'+(cat===REFCAT)+'">'+label+'<b>'+inF.filter(r=>r.cat===cat).length.toLocaleString()+'</b></button>').join('');
+  const reqs = [...new Set(REF.rows.filter(r=>r.cat===REFCAT).map(r=>r.req))].sort();
+  $('ref-req').innerHTML = '<option value="*">'+REFCATS[REFCAT][1]+' ('+reqs.length+')</option>'+reqs.map(q=>'<option'+(q===REFREQ?' selected':'')+'>'+esc(q)+'</option>').join('');
+  if(REFREQ!=='*' && !reqs.includes(REFREQ)) REFREQ='*';
+  $('ref-req').value = REFREQ;
   const rows = refRows(true), [k,dir] = REFSORT;
   const val = r => k==='status' ? REFS.findIndex(x=>x.k===r.kind) : r[k];
   rows.sort((a,b)=>{ let x=val(a), y=val(b); if(x instanceof Date) x=x.getTime(); if(y instanceof Date) y=y.getTime();
@@ -771,10 +774,8 @@ $('v-rec').addEventListener('click',()=>{F.view='rec'; reset();});
 $('v-emp').addEventListener('click',()=>{F.view='emp'; reset();});
 $('v-ref').addEventListener('click',()=>{F.view='ref'; reset();});
 $('refchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; REFST = REFST.includes(k)? REFST.filter(x=>x!==k) : [...REFST,k]; reset(); });
-$('ref-req-wrap').addEventListener('change',e=>{ const el=e.target.closest('select'); if(!el) return;
-  if(el.value===''){ if(el.dataset.cat===REFCAT){ REFCAT='ref'; REFREQ='*'; } }   // picking the label goes back to refresher requirements
-  else { REFCAT = el.dataset.cat; REFREQ = el.value; }
-  REFST = []; reset(); });
+$('ref-cat').addEventListener('click',e=>{ const b=e.target.closest('[data-cat]'); if(!b) return; REFCAT=b.dataset.cat; REFREQ='*'; REFST=[]; reset(); });
+$('ref-req').addEventListener('change',e=>{ REFREQ=e.target.value; reset(); });
 $('morebtn').addEventListener('click',()=>{ shown+=PAGE; render(); });
 $('sitebar').addEventListener('click',e=>{ const b=e.target.closest('[data-light]'); if(!b) return; const k=b.dataset.light; LIGHTF = LIGHTF.includes(k)? LIGHTF.filter(x=>x!==k) : [...LIGHTF,k]; reset(); });
 $('tbl').addEventListener('click',e=>{
