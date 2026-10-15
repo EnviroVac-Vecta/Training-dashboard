@@ -416,8 +416,10 @@ const noteTag = name => medTag(name) + (LEVELUP.test(name||'') ? '<span class="m
 // ---------- Refresher Training (HSI Training Requirement Status) ----------
 const REF = {reqs:[], rows:[]};
 // Delinquent and In Training Window share one chip; each row still shows its own HSI status.
+// Medical items (fit tests, blood panels, exams, PFT, audiogram, Rapid MEQ) have their own chip, whatever their status.
 const REFS = [
   {k:'due', label:'Delinquent or in training window', c:'--s-expired'},
+  {k:'medical', label:'Medical', c:'--s-failed'},
   {k:'Current', label:'Current', c:'--s-current'},
   {k:'other', label:'Other', c:'--s-notdone'},
 ];
@@ -432,7 +434,7 @@ function addRefresher(rf){
     const [id,name,team,ri,status,last,win,due] = x;
     const h = (id && byId.get(id)) || byName.get(nameKey(name));
     const r = {id, name: h ? h.name : name, loc: team || (h ? h.loc : 'Unassigned'), role: h ? h.role : 'Not set',
-      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: refKind(status),
+      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: MEDICAL.test(rf.reqs[ri]||'') ? 'medical' : refKind(status),
       last: parseD(last), win: parseD(win), due: parseD(due)};
     r.days = r.due ? Math.round((r.due - today)/DAY) : null;
     return r;
