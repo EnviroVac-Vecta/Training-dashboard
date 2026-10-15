@@ -208,6 +208,37 @@ def read_tappi(xlsx_bytes):
     return {"cols": cols, "rows": out}
 
 
+def read_refresher(xlsx_bytes):
+    """HSI Training Requirement Status > By Team/Member - All -> compact rows for the Refresher Training view."""
+    wb = load_workbook(io.BytesIO(xlsx_bytes), read_only=True, data_only=True)
+    rows = list(wb.worksheets[0].iter_rows(values_only=True))
+    h = next((i for i, r in enumerate(rows[:15]) if r and "Requirement" in [str(v or "").strip() for v in r]
+              and "First Name" in [str(v or "").strip() for v in r]), None)
+    if h is None:
+        print("::warning title=Refresher::Couldn't find the header row in the refresher file; skipping it.")
+        return None
+    hdr = [str(v or "").strip() for v in rows[h]]
+    col = lambda n: hdr.index(n) if n in hdr else None
+    c = {k: col(n) for k, n in (("first", "First Name"), ("last", "Last Name"), ("team", "Teams"), ("req", "Requirement"),
+                                 ("status", "Compliance Status"), ("last_done", "Last Completion Date"),
+                                 ("window", "Start Date for Next Due"), ("due", "Due Date"))}
+    reqs, out = [], []
+    for r in rows[h + 1:]:
+        g = lambda k: r[c[k]] if c[k] is not None and c[k] < len(r) else None
+        if not g("req") or not g("last"):
+            continue
+        last, emp_id = str(g("last")).strip(), ""
+        if "," in last:  # HSI puts the login ID after the last name: "Ferguson,3LDUWVKMI"
+            last, emp_id = [x.strip() for x in last.split(",", 1)]
+        req = str(g("req")).strip()
+        if req not in reqs:
+            reqs.append(req)
+        out.append([emp_id, (str(g("first") or "").strip() + " " + last).strip(), str(g("team") or "").strip(),
+                    reqs.index(req), str(g("status") or "").strip(), iso(g("last_done")), iso(g("window")), iso(g("due"))])
+    print(f"Refresher: {len(out):,} requirement rows, {len(reqs)} requirements.")
+    return {"reqs": reqs, "rows": out}
+
+
 def main():
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
@@ -225,6 +256,12 @@ def main():
     tappi = read_tappi(tappi_bytes) if tappi_bytes else None
     if tappi:
         data["tappi"] = tappi
+    # Refresher Training view: HSI Training Requirement Status (HSI Refresher Training.xlsx).
+    ref_path = os.environ.get("REFRESHER_FILE")
+    ref_bytes = open(ref_path, "rb").read() if ref_path else fetch_xlsx("REFRESHER_URL", "Refresher")
+    refresher = read_refresher(ref_bytes) if ref_bytes else None
+    if refresher:
+        data["refresher"] = refresher
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     for name in ("index.html", "plants.js"):
@@ -240,7 +277,8 @@ def main():
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees"
-          + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)"))
+          + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
+          + (f", {len(refresher['rows']):,} refresher rows" if refresher else ", no refresher file yet (add the REFRESHER_URL secret)"))
 
 
 if __name__ == "__main__":

@@ -224,13 +224,16 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
     <div class="stchips" id="stchips" role="group" aria-label="Filter by status"></div>
+    <div class="stchips" id="refchips" role="group" aria-label="Filter refresher status" hidden></div>
     <div class="tablebar">
       <div class="chiprow">
         <div class="seg" role="group" aria-label="View">
-          <button type="button" id="v-rec" aria-pressed="true">Training records</button>
+          <button type="button" id="v-rec" aria-pressed="true">Site Specific Training</button>
+          <button type="button" id="v-ref" aria-pressed="false" hidden>Refresher Training</button>
           <button type="button" id="v-emp" aria-pressed="false">By employee</button>
         </div>
-        <label class="toggle"><input type="checkbox" id="f-old"> Show older records replaced by a retake</label>
+        <label class="toggle" id="old-wrap"><input type="checkbox" id="f-old"> Show older records replaced by a retake</label>
+        <div class="field" id="ref-req-wrap" hidden><select id="ref-req" aria-label="Refresher requirement"></select></div>
       </div>
       <div class="chiprow"><span class="count" id="count"></span><button class="btn" id="export" type="button" hidden>Export CSV</button></div>
     </div>
@@ -322,6 +325,7 @@ function build(data){
     return r;
   });
   if(data.tappi && data.tappi.rows) addTappi(data.tappi);
+  if(data.refresher && data.refresher.rows) addRefresher(data.refresher);
   // A blank "no course" row only means something when the employee has no other records.
   const hasCourse = new Set(RECS.filter(r=>r.course).map(r=>r.empKey));
   RECS = RECS.filter(r=>r.course || !hasCourse.has(r.empKey));
@@ -400,10 +404,72 @@ function renderSiteBar(base){
   return mills;
 }
 
+// ---------- Refresher Training (HSI Training Requirement Status) ----------
+const REF = {reqs:[], rows:[]};
+const REFS = [
+  {k:'Delinquent', label:'Delinquent', c:'--s-expired'},
+  {k:'In Training Window', label:'In training window', c:'--s-d30'},
+  {k:'Current', label:'Current', c:'--s-current'},
+  {k:'other', label:'Other', c:'--s-notdone'},
+];
+const refKind = st => REFS.some(x=>x.k===st) ? st : 'other';
+let REFST = [], REFREQ = '', REFSORT = ['due',1];
+function addRefresher(rf){
+  REF.reqs = rf.reqs;
+  const byId = new Map(); RECS.forEach(r=>{ if(r.id && !byId.has(r.id)) byId.set(r.id, r); });
+  const byName = new Map(); RECS.forEach(r=>{ const k=nameKey(r.name); if(k && !byName.has(k)) byName.set(k, r); });
+  REF.rows = rf.rows.map(x=>{
+    const [id,name,team,ri,status,last,win,due] = x;
+    const h = (id && byId.get(id)) || byName.get(nameKey(name));
+    const r = {id, name: h ? h.name : name, loc: team || (h ? h.loc : 'Unassigned'), role: h ? h.role : 'Not set',
+      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: refKind(status),
+      last: parseD(last), win: parseD(win), due: parseD(due)};
+    r.days = r.due ? Math.round((r.due - today)/DAY) : null;
+    return r;
+  });
+  $('v-ref').hidden = false;
+  $('ref-req').innerHTML = '<option value="">All refresher requirements</option>'+rf.reqs.slice().sort().map(q=>'<option>'+esc(q)+'</option>').join('');
+}
+function refRows(useStatus){
+  return REF.rows.filter(r=>{
+    if(F.emp.length && !F.emp.includes(r.empKey)) return false;
+    if(F.loc.length && !F.loc.includes(r.loc)) return false;
+    if(F.role.length && !F.role.includes(r.role)) return false;
+    if(REFREQ && r.req!==REFREQ) return false;
+    if(useStatus && REFST.length && !REFST.includes(r.kind)) return false;
+    return true;
+  });
+}
+function renderRefresher(){
+  const all = refRows(false), n = {}; all.forEach(r=>n[r.kind]=(n[r.kind]||0)+1);
+  const rc = $('refchips'); rc.classList.toggle('dim', REFST.length>0);
+  rc.innerHTML = REFS.filter(x=>x.k!=='other'||n.other).map(x=>'<button type="button" class="stchip" data-k="'+esc(x.k)+'" aria-pressed="'+REFST.includes(x.k)+'" style="--c:var('+x.c+')"><i></i>'+x.label+' <b>'+(n[x.k]||0).toLocaleString()+'</b></button>').join('');
+  $('ref-req').value = REFREQ;
+  const rows = refRows(true), [k,dir] = REFSORT;
+  const val = r => k==='status' ? REFS.findIndex(x=>x.k===r.kind) : r[k];
+  rows.sort((a,b)=>{ let x=val(a), y=val(b); if(x instanceof Date) x=x.getTime(); if(y instanceof Date) y=y.getTime();
+    const xb = x==null||x==='', yb = y==null||y===''; if(xb!==yb) return xb?1:-1;
+    const c = typeof x==='string' ? x.localeCompare(y) : (x||0)-(y||0); return c*dir || a.name.localeCompare(b.name); });
+  current = rows;
+  const cols = [['name','Employee'],['loc','Location'],['req','Requirement'],['last','Last completed'],['win','Window opens'],['due','Due date'],['days','Days to due'],['status','Status']];
+  $('tbl').querySelector('thead').innerHTML = '<tr>'+cols.map(([c,l])=>'<th scope="col"><button type="button" data-rsort="'+c+'">'+l+(k===c?'<span class="arr">'+(dir>0?'↑':'↓')+'</span>':'')+'</button></th>').join('')+'</tr>';
+  $('tbl').querySelector('tbody').innerHTML = rows.slice(0,shown).map(r=>{
+    const s = REFS.find(x=>x.k===r.kind), tint = r.kind==='Delinquent'?16 : r.kind==='In Training Window'?13 : 0;
+    const days = r.days==null ? '' : (r.days<0 ? '−'+Math.abs(r.days) : r.days);
+    return '<tr'+(tint?' class="tint" style="--c:var('+s.c+');--t:'+tint+'%"':'')+'><td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||'No ID')+'</span></td>'+
+      '<td>'+esc(r.loc)+'</td><td class="course">'+esc(r.req)+'</td><td class="date">'+fmtD(r.last)+'</td><td class="date">'+fmtD(r.win)+'</td><td class="date">'+fmtD(r.due)+'</td><td class="num">'+days+'</td>'+
+      '<td><span class="pill" style="--c:var('+s.c+')">'+esc(r.status||'—')+'</span></td></tr>';
+  }).join('') || '<tr><td colspan="8"><div class="empty">No refresher requirements match these filters.</div></td></tr>';
+  $('count').textContent = rows.length.toLocaleString()+' requirement'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
+  $('more').hidden = rows.length<=shown;
+  $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
+}
+
 // ---------- employee card ----------
 function openCard(key){
-  const recs = empRecs(key); if(!recs.length) return;
-  const r0 = recs.find(r=>r.source!=='TAPPI') || recs[0], L = window.PLANT.LIGHT;
+  const recs = empRecs(key), rref = REF.rows.find(r=>r.empKey===key);
+  if(!recs.length && !rref) return;
+  const r0 = recs.find(r=>r.source!=='TAPPI') || recs[0] || rref, L = window.PLANT.LIGHT;
   const tid = (recs.find(r=>r.tappiId)||{}).tappiId;
   let mills = selMills();
   if(!mills.length){ // no plant course picked: show every mill this person has a TAPPI record for
@@ -416,6 +482,10 @@ function openCard(key){
     h += '<section><h3><i class="dot" style="--c:var('+L[rd.light].c+')"></i>'+esc(m.name)+(m.psm?' (PSM)':'')+'<span class="lbl">'+L[rd.light].label+'</span></h3><ul class="reqlist">'+
       rd.reqs.map(q=>'<li style="--c:var('+L[q.s].c+')"><i class="dot"></i><span>'+esc(q.label)+'<span class="st">'+esc(q.text)+'</span>'+(q.rec?'<small>'+esc(q.rec.course)+'</small>':'')+'</span></li>').join('')+'</ul></section>';
   });
+  const rr = REF.rows.filter(r=>r.empKey===key).sort((a,b)=>REFS.findIndex(x=>x.k===a.kind)-REFS.findIndex(x=>x.k===b.kind) || a.req.localeCompare(b.req));
+  if(rr.length) h += '<section><h3>Refresher training<span class="lbl">'+rr.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
+    rr.map(r=>{ const s=REFS.find(x=>x.k===r.kind); return '<tr><td>'+esc(r.req)+'</td><td class="date">'+(r.due?'Due '+fmtD(r.due):'')+'</td><td><span class="pill" style="--c:var('+s.c+')">'+esc(r.status||'—')+'</span></td></tr>'; }).join('')+
+    '</tbody></table></div></section>';
   const cur = recs.filter(r=>!r.old && r.course).sort((a,b)=>stOrder[a.st]-stOrder[b.st] || a.course.localeCompare(b.course));
   h += '<section><h3>All training on file<span class="lbl">'+cur.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
     cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
@@ -642,6 +712,11 @@ function render(){
   renderTiles(base); renderLocs(base); chips(); msButtons();
   $('v-rec').setAttribute('aria-pressed', F.view==='rec');
   $('v-emp').setAttribute('aria-pressed', F.view==='emp');
+  $('v-ref').setAttribute('aria-pressed', F.view==='ref');
+  const isRef = F.view==='ref' && REF.rows.length;
+  $('stchips').hidden = !!isRef; $('refchips').hidden = !isRef; $('old-wrap').hidden = !!isRef; $('ref-req-wrap').hidden = !isRef;
+  if(isRef){ $('sitebar').hidden = true; renderRefresher(); save(); return; }
+  if(F.view==='ref') F.view='rec';
   const mills = renderSiteBar(base);
   F.view==='emp' ? renderEmployees(base, mills) : renderRecords(base, mills);
   save();
@@ -662,9 +737,14 @@ $('activechips').addEventListener('click',e=>{ const b=e.target.closest('[data-r
   F[f]=F[f].filter(x=>x!==v); reset(); });
 $('v-rec').addEventListener('click',()=>{F.view='rec'; reset();});
 $('v-emp').addEventListener('click',()=>{F.view='emp'; reset();});
+$('v-ref').addEventListener('click',()=>{F.view='ref'; reset();});
+$('refchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; REFST = REFST.includes(k)? REFST.filter(x=>x!==k) : [...REFST,k]; reset(); });
+$('ref-req').addEventListener('change',e=>{ REFREQ = e.target.value; reset(); });
 $('morebtn').addEventListener('click',()=>{ shown+=PAGE; render(); });
 $('sitebar').addEventListener('click',e=>{ const b=e.target.closest('[data-light]'); if(!b) return; const k=b.dataset.light; LIGHTF = LIGHTF.includes(k)? LIGHTF.filter(x=>x!==k) : [...LIGHTF,k]; reset(); });
 $('tbl').addEventListener('click',e=>{
+  const rs=e.target.closest('[data-rsort]');
+  if(rs){ const k=rs.dataset.rsort; REFSORT = [k, REFSORT[0]===k ? -REFSORT[1] : 1]; render(); return; }
   const s=e.target.closest('[data-sort]');
   if(s){ const v=F.view, k=s.dataset.sort; const [ck,cd]=F.sort[v]; F.sort[v] = [k, ck===k ? -cd : (['expired','d30','d60','d90','notdone','failed','current','total'].includes(k)?-1:1)]; reset(); return; }
   const w=e.target.closest('[data-emp]');
@@ -677,7 +757,10 @@ $('tbl').addEventListener('click',e=>{
   btn.addEventListener('click', ()=>{
     const q = v => { v = v==null?'':String(v); return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v; };
     let lines;
-    if(F.view==='emp'){
+    if(F.view==='ref'){
+      lines = [['Employee ID','Name','Location','Requirement','Last Completed','Window Opens','Due Date','Days to Due','Status']]
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.req,isoD(r.last),isoD(r.win),isoD(r.due),r.days,r.status]));
+    } else if(F.view==='emp'){
       lines = [['Employee ID','Name','Location','Role','Expired','Expires 30 days','Expires 31-60','Expires 61-90','Not completed','Failed','Current','Total']]
         .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.expired,e.d30,e.d60,e.d90,e.notdone,e.failed,e.current,e.total]));
     } else {
@@ -685,7 +768,7 @@ $('tbl').addEventListener('click',e=>{
         .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],r.old?'Yes':'']));
     }
     // With a plant-site course picked, add the readiness and what is missing for each mill.
-    const mills = selMills();
+    const mills = F.view==='ref' ? [] : selMills();
     if(mills.length){
       lines[0] = lines[0].concat(mills.flatMap(m=>[m.name+' ready', m.name+' missing']));
       lines = [lines[0]].concat(current.map((x,i)=>lines[i+1].concat(mills.flatMap(m=>{ const rd=ready(x.empKey||x.key,m);
@@ -694,7 +777,7 @@ $('tbl').addEventListener('click',e=>{
     const csv = lines.map(l=>l.map(q).join(',')).join('\r\n');
     const url = URL.createObjectURL(new Blob([csv],{type:'text/csv'}));
     const a = document.createElement('a');
-    a.href = url; a.download = 'Training_'+(F.view==='emp'?'Employees':'Records')+'_'+isoD(today)+'.csv';
+    a.href = url; a.download = 'Training_'+(F.view==='emp'?'Employees':F.view==='ref'?'Refresher':'Records')+'_'+isoD(today)+'.csv';
     document.body.appendChild(a); a.click(); a.remove();
     setTimeout(()=>URL.revokeObjectURL(url), 1000);
   });
