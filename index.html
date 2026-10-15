@@ -126,6 +126,7 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .lights{display:flex;flex-wrap:wrap;gap:6px}
 td.ready{white-space:nowrap;width:1%}
 td.ready .dot+.dot{margin-left:8px}
+.medical{display:block;font-size:11px;font-weight:600;color:var(--s-failed);margin-top:1px}
 .src{font-size:10px;font-family:var(--f-mono);color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:6px;white-space:nowrap}
 /* employee card */
 .card-bg{position:fixed;inset:0;z-index:50;background:color-mix(in srgb,var(--fg) 35%,transparent);display:flex;justify-content:flex-end}
@@ -404,6 +405,10 @@ function renderSiteBar(base){
   return mills;
 }
 
+// Medical items (fit test, blood panel, exam, PFT, audiogram) are requirements, not courses.
+const MEDICAL = /respirator fit|fit[- ]?test|heavy metal|blood panel|medical exam|physical exam|\bPFTs?\b|pulmonary function|audiogram|hearing test/i;
+const medTag = name => MEDICAL.test(name||'') ? '<span class="medical">Medical - Not a Course</span>' : '';
+
 // ---------- Refresher Training (HSI Training Requirement Status) ----------
 const REF = {reqs:[], rows:[]};
 const REFS = [
@@ -457,7 +462,7 @@ function renderRefresher(){
     const s = REFS.find(x=>x.k===r.kind), tint = r.kind==='Delinquent'?16 : r.kind==='In Training Window'?13 : 0;
     const days = r.days==null ? '' : (r.days<0 ? '−'+Math.abs(r.days) : r.days);
     return '<tr'+(tint?' class="tint" style="--c:var('+s.c+');--t:'+tint+'%"':'')+'><td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||'No ID')+'</span></td>'+
-      '<td>'+esc(r.loc)+'</td><td class="course">'+esc(r.req)+'</td><td class="date">'+fmtD(r.last)+'</td><td class="date">'+fmtD(r.win)+'</td><td class="date">'+fmtD(r.due)+'</td><td class="num">'+days+'</td>'+
+      '<td>'+esc(r.loc)+'</td><td class="course">'+esc(r.req)+medTag(r.req)+'</td><td class="date">'+fmtD(r.last)+'</td><td class="date">'+fmtD(r.win)+'</td><td class="date">'+fmtD(r.due)+'</td><td class="num">'+days+'</td>'+
       '<td><span class="pill" style="--c:var('+s.c+')">'+esc(r.status||'—')+'</span></td></tr>';
   }).join('') || '<tr><td colspan="8"><div class="empty">No refresher requirements match these filters.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' requirement'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
@@ -484,11 +489,11 @@ function openCard(key){
   });
   const rr = REF.rows.filter(r=>r.empKey===key).sort((a,b)=>REFS.findIndex(x=>x.k===a.kind)-REFS.findIndex(x=>x.k===b.kind) || a.req.localeCompare(b.req));
   if(rr.length) h += '<section><h3>Refresher training<span class="lbl">'+rr.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
-    rr.map(r=>{ const s=REFS.find(x=>x.k===r.kind); return '<tr><td>'+esc(r.req)+'</td><td class="date">'+(r.due?'Due '+fmtD(r.due):'')+'</td><td><span class="pill" style="--c:var('+s.c+')">'+esc(r.status||'—')+'</span></td></tr>'; }).join('')+
+    rr.map(r=>{ const s=REFS.find(x=>x.k===r.kind); return '<tr><td>'+esc(r.req)+medTag(r.req)+'</td><td class="date">'+(r.due?'Due '+fmtD(r.due):'')+'</td><td><span class="pill" style="--c:var('+s.c+')">'+esc(r.status||'—')+'</span></td></tr>'; }).join('')+
     '</tbody></table></div></section>';
   const cur = recs.filter(r=>!r.old && r.course).sort((a,b)=>stOrder[a.st]-stOrder[b.st] || a.course.localeCompare(b.course));
   h += '<section><h3>All training on file<span class="lbl">'+cur.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
-    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
+    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+medTag(r.course)+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
     '</tbody></table></div></section>';
   h += '<div><button type="button" class="btn" id="card-filter">Show only this employee\'s records</button></div>';
   $('card').innerHTML = h; $('cardbg').hidden = false; $('card-x').focus();
@@ -670,7 +675,7 @@ function renderRecords(base, mills){
       (mills.length?'<td class="ready">'+dots(r.empKey,mills)+'</td>':'')+
       '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||(r.tappiId?'TAPPI '+r.tappiId:'No ID'))+'</span></td>'+
       '<td>'+esc(r.loc)+'</td><td>'+esc(r.role)+'</td>'+
-      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
+      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+medTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td></tr>';
