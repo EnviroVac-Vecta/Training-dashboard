@@ -411,7 +411,10 @@ const MEDICAL = /respirator fit|fit[- ]?test|heavy metal|blood panel|medical exa
 const medTag = name => MEDICAL.test(name||'') ? '<span class="medical">Medical - Not a Course</span>' : '';
 // Cohort requirements carry a (4m), (8m) or (1yr) ending in HSI.
 const LEVELUP = /\(\s*(1\s*y(r|ear)?|4\s*m|8\s*m)\s*\)/i;
-const noteTag = name => medTag(name) + (LEVELUP.test(name||'') ? '<span class="medical lvl">For Level Up Program</span>' : '');
+const noteTag = name => medTag(name) + (LEVELUP.test(name||'') || /tech\s*ii\s*to\s*tech\s*iii\s*skill\s*assessment/i.test(name||'') ? '<span class="medical lvl">For Level Up Program</span>' : '');
+
+// Level Up cohort items ((4m)/(8m)/(1yr) and the Tech II to Tech III Skill Assessment) get their own chip in Refresher Training.
+const LEVELUP_REQ = new RegExp(LEVELUP.source+'|tech\\s*ii\\s*to\\s*tech\\s*iii\\s*skill\\s*assessment','i');
 
 // ---------- Refresher Training (HSI Training Requirement Status) ----------
 const REF = {reqs:[], rows:[]};
@@ -420,11 +423,12 @@ const REF = {reqs:[], rows:[]};
 const REFS = [
   {k:'due', label:'Delinquent or in training window', c:'--s-expired'},
   {k:'medical', label:'Medical', c:'--s-failed'},
+  {k:'levelup', label:'Level Up Program', c:'--accent'},
   {k:'Current', label:'Current', c:'--s-current'},
   {k:'other', label:'Other', c:'--s-notdone'},
 ];
 const refKind = st => /delinquent|training window/i.test(st||'') ? 'due' : REFS.some(x=>x.k===st) ? st : 'other';
-const refColor = r => r.notAssigned ? '--s-current' : /delinquent/i.test(r.status||'') ? '--s-expired' : /training window/i.test(r.status||'') ? '--s-d30' : (REFS.find(x=>x.k===r.kind)||REFS[REFS.length-1]).c;
+const refColor = r => r.kind==='levelup' && !/delinquent|training window/i.test(r.status||'') ? '--accent' : r.notAssigned ? '--s-current' : /delinquent/i.test(r.status||'') ? '--s-expired' : /training window/i.test(r.status||'') ? '--s-d30' : (REFS.find(x=>x.k===r.kind)||REFS[REFS.length-1]).c;
 let REFST = [], REFREQ = '', REFSORT = ['due',1];
 function addRefresher(rf){
   REF.reqs = rf.reqs;
@@ -434,7 +438,7 @@ function addRefresher(rf){
     const [id,name,team,ri,status,last,win,due] = x;
     const h = (id && byId.get(id)) || byName.get(nameKey(name));
     const r = {id, name: h ? h.name : name, loc: team || (h ? h.loc : 'Unassigned'), role: h ? h.role : 'Not set',
-      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: MEDICAL.test(rf.reqs[ri]||'') ? 'medical' : refKind(status),
+      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: MEDICAL.test(rf.reqs[ri]||'') ? 'medical' : LEVELUP_REQ.test(rf.reqs[ri]||'') ? 'levelup' : refKind(status),
       last: parseD(last), win: parseD(win), due: parseD(due)};
     r.days = r.due ? Math.round((r.due - today)/DAY) : null;
     // A window that opens after the due date (e.g. opens 2027, due 2026) means the next round
