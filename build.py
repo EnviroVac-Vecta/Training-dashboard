@@ -10,6 +10,7 @@
 4. Writes the finished site to site/.
 """
 import io
+import re
 import os
 import sys
 import json
@@ -42,6 +43,10 @@ COLUMNS = {
     "Status": ["status", "coursestatus", "completionstatus"],
 }
 REQUIRED = ["Name", "Course Name", "Date Expire", "Status"]
+
+
+# HSI system and test logins that aren't real employees (DoneSafe, Test Student, ...).
+SYSTEM_ACCOUNT = re.compile(r"donesafe|^\s*test\b|\btest\s+student\b|\bstudent\s*,?\s*test\b|limited access", re.I)
 
 
 def norm(text):
@@ -222,7 +227,7 @@ def read_refresher(xlsx_bytes):
     c = {k: col(n) for k, n in (("first", "First Name"), ("last", "Last Name"), ("team", "Teams"), ("req", "Requirement"),
                                  ("status", "Compliance Status"), ("last_done", "Last Completion Date"),
                                  ("window", "Start Date for Next Due"), ("due", "Due Date"))}
-    reqs, out = [], []
+    reqs, out, skipped = [], [], 0
     for r in rows[h + 1:]:
         g = lambda k: r[c[k]] if c[k] is not None and c[k] < len(r) else None
         if not g("req") or not g("last"):
@@ -231,11 +236,14 @@ def read_refresher(xlsx_bytes):
         if "," in last:  # HSI puts the login ID after the last name: "Ferguson,3LDUWVKMI"
             last, emp_id = [x.strip() for x in last.split(",", 1)]
         req = str(g("req")).strip()
+        if SYSTEM_ACCOUNT.search(f"{g('first') or ''} {last}") or SYSTEM_ACCOUNT.search(str(g("last"))):
+            skipped += 1
+            continue
         if req not in reqs:
             reqs.append(req)
         out.append([emp_id, (str(g("first") or "").strip() + " " + last).strip(), str(g("team") or "").strip(),
                     reqs.index(req), str(g("status") or "").strip(), iso(g("last_done")), iso(g("window")), iso(g("due"))])
-    print(f"Refresher: {len(out):,} requirement rows, {len(reqs)} requirements.")
+    print(f"::notice title=Refresher::{len(out):,} requirement rows, {len(reqs)} requirements; left out {skipped} rows for test accounts.")
     return {"reqs": reqs, "rows": out}
 
 
@@ -244,6 +252,10 @@ def main():
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
 
     cols, rows = read_rows(get_file())
+    ni = cols.index("Name")
+    dropped = sum(1 for r in rows if SYSTEM_ACCOUNT.search(str(r[ni] or "")))
+    rows = [r for r in rows if not SYSTEM_ACCOUNT.search(str(r[ni] or ""))]
+    print(f"::notice title=Test accounts::Left out {dropped} HSI rows for system/test accounts (DoneSafe, Test Student).")
     if not rows:
         raise SystemExit("The Training Summary file had no data rows.")
     people = len({(r[0] or r[1]) for r in rows})
