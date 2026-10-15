@@ -240,7 +240,7 @@ def main():
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees"
-          + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file (Plant Sites tab hidden)"))
+          + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)"))
 
 
 if __name__ == "__main__":
