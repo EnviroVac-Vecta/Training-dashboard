@@ -126,6 +126,9 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .lights{display:flex;flex-wrap:wrap;gap:6px}
 td.ready{white-space:nowrap;width:1%}
 td.ready .dot+.dot{margin-left:8px}
+.refsel{display:flex;flex-wrap:wrap;gap:6px}
+.refsel select{width:auto;max-width:260px}
+.refsel select.on{border-color:var(--accent);background:var(--accent-soft);font-weight:500}
 .medical{display:block;font-size:11px;font-weight:600;color:var(--s-failed);margin-top:1px}
 .medical.lvl{color:var(--accent)}
 .src{font-size:10px;font-family:var(--f-mono);color:var(--accent);border:1px solid var(--accent);border-radius:3px;padding:0 4px;margin-left:6px;white-space:nowrap}
@@ -235,7 +238,11 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
           <button type="button" id="v-emp" aria-pressed="false">By employee</button>
         </div>
         <label class="toggle" id="old-wrap"><input type="checkbox" id="f-old"> Show older records replaced by a retake</label>
-        <div class="field" id="ref-req-wrap" hidden><select id="ref-req" aria-label="Refresher requirement"></select></div>
+        <div class="refsel" id="ref-req-wrap" hidden>
+          <select id="ref-req" data-cat="ref" aria-label="Refresher requirements"></select>
+          <select id="ref-lu" data-cat="levelup" aria-label="Level Up Trainings"></select>
+          <select id="ref-med" data-cat="medical" aria-label="Medical Trainings"></select>
+        </div>
       </div>
       <div class="chiprow"><span class="count" id="count"></span><button class="btn" id="export" type="button" hidden>Export CSV</button></div>
     </div>
@@ -422,14 +429,14 @@ const REF = {reqs:[], rows:[]};
 // Medical items (fit tests, blood panels, exams, PFT, audiogram, Rapid MEQ) have their own chip, whatever their status.
 const REFS = [
   {k:'due', label:'Delinquent or in training window', c:'--s-expired'},
-  {k:'medical', label:'Medical', c:'--s-failed'},
-  {k:'levelup', label:'Level Up Program', c:'--accent'},
   {k:'Current', label:'Current', c:'--s-current'},
   {k:'other', label:'Other', c:'--s-notdone'},
 ];
 const refKind = st => /delinquent|training window/i.test(st||'') ? 'due' : REFS.some(x=>x.k===st) ? st : 'other';
-const refColor = r => r.kind==='levelup' && !/delinquent|training window/i.test(r.status||'') ? '--accent' : r.notAssigned ? '--s-current' : /delinquent/i.test(r.status||'') ? '--s-expired' : /training window/i.test(r.status||'') ? '--s-d30' : (REFS.find(x=>x.k===r.kind)||REFS[REFS.length-1]).c;
-let REFST = [], REFREQ = '', REFSORT = ['due',1];
+const refColor = r => r.notAssigned ? '--s-current' : /delinquent/i.test(r.status||'') ? '--s-expired' : /training window/i.test(r.status||'') ? '--s-d30' : (REFS.find(x=>x.k===r.kind)||REFS[REFS.length-1]).c;
+// Three lists: refresher requirements, Level Up trainings and medical trainings. One is shown at a time.
+let REFST = [], REFCAT = 'ref', REFREQ = '*', REFSORT = ['due',1];
+const REFCATS = {ref:['ref-req','Refresher requirements','All refresher requirements'], levelup:['ref-lu','Level Up Trainings','All Level Up trainings'], medical:['ref-med','Medical Trainings','All medical trainings']};
 function addRefresher(rf){
   REF.reqs = rf.reqs;
   const byId = new Map(); RECS.forEach(r=>{ if(r.id && !byId.has(r.id)) byId.set(r.id, r); });
@@ -438,7 +445,8 @@ function addRefresher(rf){
     const [id,name,team,ri,status,last,win,due] = x;
     const h = (id && byId.get(id)) || byName.get(nameKey(name));
     const r = {id, name: h ? h.name : name, loc: team || (h ? h.loc : 'Unassigned'), role: h ? h.role : 'Not set',
-      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: MEDICAL.test(rf.reqs[ri]||'') ? 'medical' : LEVELUP_REQ.test(rf.reqs[ri]||'') ? 'levelup' : refKind(status),
+      empKey: h ? h.empKey : (id || name), req: rf.reqs[ri], status, kind: refKind(status),
+      cat: MEDICAL.test(rf.reqs[ri]||'') ? 'medical' : LEVELUP_REQ.test(rf.reqs[ri]||'') ? 'levelup' : 'ref',
       last: parseD(last), win: parseD(win), due: parseD(due)};
     r.days = r.due ? Math.round((r.due - today)/DAY) : null;
     // A window that opens after the due date (e.g. opens 2027, due 2026) means the next round
@@ -447,14 +455,19 @@ function addRefresher(rf){
     return r;
   });
   $('v-ref').hidden = false;
-  $('ref-req').innerHTML = '<option value="">All refresher requirements</option>'+rf.reqs.slice().sort().map(q=>'<option>'+esc(q)+'</option>').join('');
+  Object.entries(REFCATS).forEach(([cat,[id,label,all]])=>{
+    const reqs = [...new Set(REF.rows.filter(r=>r.cat===cat).map(r=>r.req))].sort();
+    $(id).innerHTML = '<option value="">'+label+'</option><option value="*">'+all+' ('+reqs.length+')</option>'+reqs.map(q=>'<option>'+esc(q)+'</option>').join('');
+    $(id).hidden = !reqs.length;
+  });
 }
 function refRows(useStatus){
   return REF.rows.filter(r=>{
     if(F.emp.length && !F.emp.includes(r.empKey)) return false;
     if(F.loc.length && !F.loc.includes(r.loc)) return false;
     if(F.role.length && !F.role.includes(r.role)) return false;
-    if(REFREQ && r.req!==REFREQ) return false;
+    if(r.cat!==REFCAT) return false;
+    if(REFREQ!=='*' && r.req!==REFREQ) return false;
     if(useStatus && REFST.length && !REFST.includes(r.kind)) return false;
     return true;
   });
@@ -463,7 +476,7 @@ function renderRefresher(){
   const all = refRows(false), n = {}; all.forEach(r=>n[r.kind]=(n[r.kind]||0)+1);
   const rc = $('refchips'); rc.classList.toggle('dim', REFST.length>0);
   rc.innerHTML = REFS.filter(x=>x.k!=='other'||n.other).map(x=>'<button type="button" class="stchip" data-k="'+esc(x.k)+'" aria-pressed="'+REFST.includes(x.k)+'" style="--c:var('+x.c+')"><i></i>'+x.label+' <b>'+(n[x.k]||0).toLocaleString()+'</b></button>').join('');
-  $('ref-req').value = REFREQ;
+  Object.entries(REFCATS).forEach(([cat,[id]])=>{ const el=$(id); el.value = cat===REFCAT ? REFREQ : ''; el.classList.toggle('on', cat===REFCAT); });
   const rows = refRows(true), [k,dir] = REFSORT;
   const val = r => k==='status' ? REFS.findIndex(x=>x.k===r.kind) : r[k];
   rows.sort((a,b)=>{ let x=val(a), y=val(b); if(x instanceof Date) x=x.getTime(); if(y instanceof Date) y=y.getTime();
@@ -758,7 +771,10 @@ $('v-rec').addEventListener('click',()=>{F.view='rec'; reset();});
 $('v-emp').addEventListener('click',()=>{F.view='emp'; reset();});
 $('v-ref').addEventListener('click',()=>{F.view='ref'; reset();});
 $('refchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; REFST = REFST.includes(k)? REFST.filter(x=>x!==k) : [...REFST,k]; reset(); });
-$('ref-req').addEventListener('change',e=>{ REFREQ = e.target.value; reset(); });
+$('ref-req-wrap').addEventListener('change',e=>{ const el=e.target.closest('select'); if(!el) return;
+  if(el.value===''){ if(el.dataset.cat===REFCAT){ REFCAT='ref'; REFREQ='*'; } }   // picking the label goes back to refresher requirements
+  else { REFCAT = el.dataset.cat; REFREQ = el.value; }
+  REFST = []; reset(); });
 $('morebtn').addEventListener('click',()=>{ shown+=PAGE; render(); });
 $('sitebar').addEventListener('click',e=>{ const b=e.target.closest('[data-light]'); if(!b) return; const k=b.dataset.light; LIGHTF = LIGHTF.includes(k)? LIGHTF.filter(x=>x!==k) : [...LIGHTF,k]; reset(); });
 $('tbl').addEventListener('click',e=>{
