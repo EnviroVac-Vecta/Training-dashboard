@@ -113,6 +113,36 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .bar span{height:100%;background:var(--c)}
 .loctot{font-family:var(--f-mono);font-size:12px;color:var(--muted);text-align:right;font-variant-numeric:tabular-nums}
 
+/* plant sites */
+.sitebar{display:grid;grid-template-columns:minmax(220px,2fr) minmax(180px,1.4fr) auto auto;gap:10px;align-items:end}
+@media (max-width:760px){.sitebar{grid-template-columns:1fr 1fr}.sitebar .field:first-child,.sitebar .field:nth-child(2){grid-column:1/-1}}
+.lights{display:flex;flex-wrap:wrap;gap:8px}
+.light{font:inherit;display:flex;align-items:center;gap:10px;padding:8px 14px 8px 12px;border-radius:var(--radius);border:1px solid var(--line);background:var(--surface);color:var(--fg);cursor:pointer;min-width:150px;text-align:left}
+.light .dot{width:16px;height:16px}
+.light b{font-family:var(--f-display);font-stretch:85%;font-size:26px;line-height:1;font-variant-numeric:tabular-nums}
+.light span{font-size:12px;color:var(--muted);line-height:1.2;max-width:12ch}
+.light:hover{border-color:var(--c)}
+.light[aria-pressed="true"]{border-color:var(--c);background:color-mix(in srgb,var(--c) 14%,var(--surface))}
+.lights.dim .light[aria-pressed="false"]{opacity:.55}
+.dot{display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--c);box-shadow:0 0 0 3px color-mix(in srgb,var(--c) 22%,transparent);flex:none;vertical-align:middle}
+.psrule{font-size:12.5px;color:var(--muted);background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:8px 12px}
+.psrule b{color:var(--fg);font-weight:600}
+.req{display:flex;flex-direction:column;gap:1px}
+.req .st{font-family:var(--f-mono);font-size:11.5px;font-weight:500;color:var(--c)}
+.req small{font-size:11px;color:var(--muted)}
+td.light-td{width:40px;text-align:center;vertical-align:middle}
+td.fix{color:var(--s-expired);font-size:12.5px;max-width:320px}
+td.fix.ok{color:var(--muted)}
+#ps-tbl.grid{min-width:0;width:auto}
+#ps-tbl.grid th.mill{writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;padding:8px 4px;font-size:10.5px;letter-spacing:.02em;text-transform:none;vertical-align:bottom}
+#ps-tbl.grid th.mill button{all:unset;cursor:pointer}
+#ps-tbl.grid th.mill button:hover{color:var(--accent)}
+#ps-tbl.grid td.cell{text-align:center;padding:5px 4px;vertical-align:middle}
+#ps-tbl.grid td.cell button{all:unset;cursor:pointer;display:inline-flex;padding:3px;border-radius:50%}
+#ps-tbl.grid td.cell button:focus-visible{outline:2px solid var(--accent)}
+#ps-tbl.grid td.who-td{white-space:nowrap;position:sticky;left:0;background:var(--surface);z-index:1}
+#ps-tbl select:disabled,#ps-mill:disabled{opacity:.5}
+
 /* table */
 .tablebar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -176,7 +206,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
   <div id="loaderr" class="notice" hidden></div>
 
-  <section class="filters" aria-label="Filters">
+  <section class="filters" id="filters" aria-label="Filters">
     <div class="field q ms" data-k="emp"><span class="flabel" id="lbl-emp">Employee</span></div>
     <div class="field ms" data-k="loc"><span class="flabel" id="lbl-loc">Location</span></div>
     <div class="field ms" data-k="role"><span class="flabel" id="lbl-role">Role</span></div>
@@ -188,6 +218,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
     <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Results</button>
     <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
+    <button type="button" role="tab" id="t-sites" aria-controls="tab-sites" aria-selected="false" hidden>Plant Sites</button>
   </nav>
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
@@ -215,6 +246,19 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <div class="panelhead"><h2>Status by location</h2><div class="legend" id="legend"></div></div>
       <div class="locs" id="locs"></div>
     </section>
+  </div>
+
+  <div id="tab-sites" role="tabpanel" aria-labelledby="t-sites" class="tabpanel" hidden>
+    <div class="sitebar">
+      <div class="field"><label for="ps-mill">Plant site</label><select id="ps-mill"></select></div>
+      <div class="field"><label for="ps-q">Find a person</label><input type="search" id="ps-q" placeholder="Name, TAPPI ID or location"></div>
+      <div class="field"><span class="flabel">View</span>
+        <div class="seg" role="group" aria-label="Plant site view"><button type="button" id="ps-v-site" aria-pressed="true">One site</button><button type="button" id="ps-v-grid" aria-pressed="false">All sites grid</button></div></div>
+      <div class="field"><button class="btn" id="ps-export" type="button">Export CSV</button></div>
+    </div>
+    <div class="lights" id="ps-lights" role="group" aria-label="Filter by readiness"></div>
+    <div class="psrule" id="ps-rule"></div>
+    <div class="tablewrap" id="ps-wrap"><table id="ps-tbl"><thead></thead><tbody></tbody></table></div>
   </div>
 
   <footer>
@@ -528,10 +572,14 @@ const reset = () => { shown = PAGE; render(); };
 // events
 $('f-old').addEventListener('change',e=>{F.old=e.target.checked; reset();});
 $('f-clear').addEventListener('click',()=>{ MS.forEach(k=>F[k]=[]); F.st=[]; closePop(); reset(); });
-function setTab(t){ F.tab=t; ['results','overview'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); }); save(); }
+function setTab(t){ F.tab=t; ['results','overview','sites'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); });
+  // The Employee / Location / Role / Course filters are for the HSI records, not the plant-site view.
+  $('filters').hidden = $('activechips').hidden = t==='sites'; save(); }
 $('t-results').addEventListener('click',()=>setTab('results'));
 $('t-overview').addEventListener('click',()=>setTab('overview'));
 $('stchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
+$('t-sites').addEventListener('click',()=>setTab('sites'));
+const SAVED_TAB = F.tab;
 setTab(F.tab==='overview'?'overview':'results');
 $('tiles').addEventListener('click',e=>{ const b=e.target.closest('.tile'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
 $('locs').addEventListener('click',e=>{ const b=e.target.closest('.locrow'); if(!b) return; const l=b.dataset.loc; F.loc = F.loc.includes(l)?F.loc.filter(x=>x!==l):[...F.loc,l]; reset(); });
@@ -584,6 +632,9 @@ async function unlock(enc, pass){
 function start(data){
   $('gate').hidden = true; $('app').hidden = false;
   build(data); setupMS(); render();
+  if(data.tappi && data.tappi.rows && data.tappi.rows.length && window.initPlantSites){
+    window.initPlantSites(data.tappi, RECS); $('t-sites').hidden = false; if(SAVED_TAB==='sites') setTab('sites');
+  }
   const g = new Date(data.generated);
   const ageH = (Date.now()-g.getTime())/3600000;
   $('fresh').innerHTML = '<span>Data refreshed <b>'+g.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</b></span>'+
@@ -618,4 +669,5 @@ fetch('data.enc.json',{cache:'no-store'}).then(r=>{
 })();
 </script>
 
+<script src="plants.js"></script>
 </body></html>
