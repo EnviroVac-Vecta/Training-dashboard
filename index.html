@@ -151,7 +151,7 @@ td.ready .dot+.dot{margin-left:8px}
 .card .recs td{padding:5px 6px}
 
 /* site requirements (Microsoft List) */
-.reqbar{display:grid;grid-template-columns:minmax(220px,2fr) minmax(160px,1fr) minmax(160px,1fr) auto;gap:10px;align-items:end}
+.reqbar{display:grid;grid-template-columns:minmax(220px,2fr) repeat(3,minmax(150px,1fr)) auto;gap:10px;align-items:end}
 @media (max-width:760px){.reqbar{grid-template-columns:1fr 1fr}.reqbar .field:first-child{grid-column:1/-1}}
 .reqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:12px;align-items:start}
 .site{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
@@ -283,6 +283,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <div class="field"><label for="rq-q">Find a site</label><input type="search" id="rq-q" placeholder="Site, training, platform…"></div>
       <div class="field"><label for="rq-div">Division</label><select id="rq-div"></select></div>
       <div class="field"><label for="rq-plat">Training platform</label><select id="rq-plat"></select></div>
+      <div class="field"><label for="rq-bg">Background check</label><select id="rq-bg"></select></div>
       <div class="field"><span class="flabel">&nbsp;</span><span class="count" id="rq-count"></span></div>
     </div>
     <div class="reqgrid" id="rq-list"></div>
@@ -540,7 +541,9 @@ function initSiteReqs(sr){
   const uniq = k => [...new Set(sr.rows.map(r=>String(r[k]||'').trim()).filter(Boolean))].sort();
   $('rq-div').innerHTML = '<option value="">All divisions</option>'+uniq('Division').map(v=>'<option>'+esc(v)+'</option>').join('');
   $('rq-plat').innerHTML = '<option value="">All platforms</option>'+uniq('Training Platform').map(v=>'<option>'+esc(v)+'</option>').join('');
-  ['rq-q','rq-div','rq-plat'].forEach(id=>$(id).addEventListener('input', drawSiteReqs));
+  const nBg = sr.rows.filter(r=>!String(r['Background check']||'').trim()).length;
+  $('rq-bg').innerHTML = '<option value="">All background checks</option>'+uniq('Background check').map(v=>'<option>'+esc(v)+'</option>').join('')+(nBg?'<option value="__none">Not listed ('+nBg+')</option>':'');
+  ['rq-q','rq-div','rq-plat','rq-bg'].forEach(id=>$(id).addEventListener('input', drawSiteReqs));
   drawSiteReqs();
 }
 function drawSiteReqs(){
@@ -549,6 +552,8 @@ function drawSiteReqs(){
   const rows = SR.rows.filter(r=>{
     if(dv && String(r['Division']||'').trim()!==dv) return false;
     if(pl && String(r['Training Platform']||'').trim()!==pl) return false;
+    const bg = $('rq-bg').value, rbg = String(r['Background check']||'').trim();
+    if(bg && (bg==='__none' ? rbg!=='' : rbg!==bg)) return false;
     const hay = Object.values(r).join(' ').toLowerCase();
     return q.every(t=>hay.includes(t));
   }).sort((a,b)=>String(a['Site']||'').localeCompare(String(b['Site']||'')));
