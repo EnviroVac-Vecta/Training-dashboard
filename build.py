@@ -257,6 +257,9 @@ SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|
                      r"Identifier|IsFolder|Thumbnail|LinkTitle|FilenameWithExtension|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
 
 
+SECRET_COL = re.compile(r"password|admin|directions|login|username|credential", re.I)
+
+
 def get_site_requirements():
     """Rows of the "Vecta and Envirovac Training Site Specific Requirements" Microsoft List, through the SITE_REQS_URL flow."""
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
@@ -282,6 +285,8 @@ def get_site_requirements():
         for k, v in it.items():
             if SP_SKIP.search(k) or k.endswith("#Id") or k.endswith("@odata.type") or "#" in k:
                 continue
+            if SECRET_COL.search(k):   # passwords, admin logins and login directions never go on the public site
+                continue
             v = clean(v)
             if v not in ("", None):
                 row[k.replace("_x0020_", " ").replace("_x002f_", "/").replace("_x0028_", "(").replace("_x0029_", ")")] = v
@@ -293,8 +298,6 @@ def get_site_requirements():
             if k not in cols:
                 cols.append(k)
     print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}")
-    for i, r in enumerate(rows[:3]):
-        print(f"::notice title=Site requirements row {i + 1}::" + json.dumps(r, ensure_ascii=False)[:2000].replace("%", "%25").replace("\n", "%0A"))
     return {"cols": cols, "rows": rows}
 
 
