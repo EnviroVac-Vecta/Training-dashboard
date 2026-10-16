@@ -252,6 +252,50 @@ def read_refresher(xlsx_bytes):
     return {"reqs": reqs, "rows": out}
 
 
+# SharePoint fields that come with every list item but aren't part of the list itself.
+SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|Author|Editor|_|OData__|ComplianceAsset|GUID|Attachments|ContentType|"
+                     r"Identifier|IsFolder|Thumbnail|Link|Name$|FilenameWithExtension|Path|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
+
+
+def get_site_requirements():
+    """Rows of the "Vecta and Envirovac Training Site Specific Requirements" Microsoft List, through the SITE_REQS_URL flow."""
+    secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
+    url = secrets.get("SITE_REQS_URL") or os.environ.get("SITE_REQS_URL")
+    if not url:
+        return None
+    res = requests.post(url, json={}, timeout=120)
+    try:
+        body = res.json()
+    except Exception:
+        print(f"::warning title=Site requirements::The list flow didn't send back JSON (status {res.status_code}); skipping it.")
+        return None
+    items = body if isinstance(body, list) else (body.get("value") or body.get("body", {}).get("value") or [])
+    def clean(v):
+        if isinstance(v, dict):   # choice / person / lookup columns
+            return v.get("Value") or v.get("DisplayName") or v.get("Title") or ""
+        if isinstance(v, list):
+            return ", ".join(filter(None, (clean(x) for x in v)))
+        return "" if v is None else v
+    rows = []
+    for it in items:
+        row = {}
+        for k, v in it.items():
+            if SP_SKIP.search(k) or k.endswith("#Id") or k.endswith("@odata.type") or "#" in k:
+                continue
+            v = clean(v)
+            if v not in ("", None):
+                row[k.replace("_x0020_", " ").replace("_x002f_", "/").replace("_x0028_", "(").replace("_x0029_", ")")] = v
+        if row:
+            rows.append(row)
+    cols = []
+    for r in rows:
+        for k in r:
+            if k not in cols:
+                cols.append(k)
+    print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}")
+    return {"cols": cols, "rows": rows}
+
+
 def main():
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
@@ -279,6 +323,9 @@ def main():
     refresher = read_refresher(ref_bytes) if ref_bytes else None
     if refresher:
         data["refresher"] = refresher
+    site_reqs = get_site_requirements()
+    if site_reqs:
+        data["siteReqs"] = site_reqs
     shutil.rmtree(OUT, ignore_errors=True)
     os.makedirs(OUT)
     for name in ("index.html", "plants.js"):
