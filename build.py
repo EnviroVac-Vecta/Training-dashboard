@@ -257,6 +257,10 @@ SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|
                      r"Identifier|IsFolder|Thumbnail|LinkTitle|FilenameWithExtension|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
 
 
+# Friendlier names for the list's shortened column names.
+NICE_COL = {"Plant/ Mill Si": "Site", "Number of Site_x0020": "Number of site trainings", "Site Specific Traini": "Site specific training",
+            "Basic Training Requi": "Basic training", "StudentLink": "Training link", "RandomSiteRequirements": "Other site requirements",
+            "FIT Test Requirement": "Fit test", "Background Requirements": "Background check", "Drug Screen Type": "Drug screen"}
 SECRET_COL = re.compile(r"password|admin|directions|login|username|credential", re.I)
 
 
@@ -290,6 +294,9 @@ def get_site_requirements():
             v = clean(v)
             if v not in ("", None):
                 row[k.replace("_x0020_", " ").replace("_x002f_", "/").replace("_x0028_", "(").replace("_x0029_", ")")] = v
+        row = {NICE_COL.get(k, k): v for k, v in row.items() if k not in ("Title",)}
+        if isinstance(row.get("Number of site trainings"), float) and row["Number of site trainings"].is_integer():
+            row["Number of site trainings"] = int(row["Number of site trainings"])
         if row:
             rows.append(row)
     cols = []

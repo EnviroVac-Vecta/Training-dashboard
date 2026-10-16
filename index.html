@@ -150,6 +150,21 @@ td.ready .dot+.dot{margin-left:8px}
 .card .recs{width:100%;min-width:0;font-size:12.5px}
 .card .recs td{padding:5px 6px}
 
+/* site requirements (Microsoft List) */
+.reqbar{display:grid;grid-template-columns:minmax(220px,2fr) minmax(160px,1fr) minmax(160px,1fr) auto;gap:10px;align-items:end}
+@media (max-width:760px){.reqbar{grid-template-columns:1fr 1fr}.reqbar .field:first-child{grid-column:1/-1}}
+.reqgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(100%,360px),1fr));gap:12px;align-items:start}
+.site{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:12px 14px;display:flex;flex-direction:column;gap:8px;min-width:0}
+.site h3{font-family:var(--f-display);font-stretch:85%;font-size:18px;margin:0;line-height:1.15}
+.site .chips{display:flex;flex-wrap:wrap;gap:6px}
+.site .chip{font-size:11.5px;border-radius:999px;padding:2px 9px;background:var(--sunk);color:var(--muted)}
+.site .chip.plat{background:var(--accent-soft);color:var(--fg)}
+.site dl{margin:0;display:grid;grid-template-columns:minmax(110px,38%) minmax(0,1fr);gap:5px 10px;font-size:13px}
+.site dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding-top:1px}
+.site dd{margin:0;overflow-wrap:anywhere}
+.site dd a{color:var(--accent)}
+.site mark{background:color-mix(in srgb,var(--s-d60) 35%,transparent);color:inherit;border-radius:2px}
+
 /* table */
 .tablebar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -213,7 +228,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
   <div id="loaderr" class="notice" hidden></div>
 
-  <section class="filters" aria-label="Filters">
+  <section class="filters" id="filters" aria-label="Filters">
     <div class="field q ms" data-k="emp"><span class="flabel" id="lbl-emp">Employee</span></div>
     <div class="field ms" data-k="loc"><span class="flabel" id="lbl-loc">Location</span></div>
     <div class="field ms" data-k="role"><span class="flabel" id="lbl-role">Role</span></div>
@@ -225,6 +240,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
     <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Results</button>
     <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
+    <button type="button" role="tab" id="t-reqs" aria-controls="tab-reqs" aria-selected="false" hidden>Site Requirements</button>
   </nav>
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
@@ -260,6 +276,16 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <div class="panelhead"><h2>Status by location</h2><div class="legend" id="legend"></div></div>
       <div class="locs" id="locs"></div>
     </section>
+  </div>
+
+  <div id="tab-reqs" role="tabpanel" aria-labelledby="t-reqs" class="tabpanel" hidden>
+    <div class="reqbar">
+      <div class="field"><label for="rq-q">Find a site</label><input type="search" id="rq-q" placeholder="Site, training, platform…"></div>
+      <div class="field"><label for="rq-div">Division</label><select id="rq-div"></select></div>
+      <div class="field"><label for="rq-plat">Training platform</label><select id="rq-plat"></select></div>
+      <div class="field"><span class="flabel">&nbsp;</span><span class="count" id="rq-count"></span></div>
+    </div>
+    <div class="reqgrid" id="rq-list"></div>
   </div>
 
   <div class="card-bg" id="cardbg" hidden><aside class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="card-name"></aside></div>
@@ -498,6 +524,37 @@ function renderRefresher(){
   $('count').textContent = rows.length.toLocaleString()+' requirement'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
   $('more').hidden = rows.length<=shown;
   $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
+}
+
+// ---------- Site Requirements tab (Microsoft List: Vecta and Envirovac Training Site Specific Requirements) ----------
+let SR = null;
+function initSiteReqs(sr){
+  SR = sr;
+  const uniq = k => [...new Set(sr.rows.map(r=>String(r[k]||'').trim()).filter(Boolean))].sort();
+  $('rq-div').innerHTML = '<option value="">All divisions</option>'+uniq('Division').map(v=>'<option>'+esc(v)+'</option>').join('');
+  $('rq-plat').innerHTML = '<option value="">All platforms</option>'+uniq('Training Platform').map(v=>'<option>'+esc(v)+'</option>').join('');
+  ['rq-q','rq-div','rq-plat'].forEach(id=>$(id).addEventListener('input', drawSiteReqs));
+  drawSiteReqs();
+}
+function drawSiteReqs(){
+  if(!SR) return;
+  const q = $('rq-q').value.trim().toLowerCase().split(/\s+/).filter(Boolean), dv = $('rq-div').value, pl = $('rq-plat').value;
+  const rows = SR.rows.filter(r=>{
+    if(dv && String(r['Division']||'').trim()!==dv) return false;
+    if(pl && String(r['Training Platform']||'').trim()!==pl) return false;
+    const hay = Object.values(r).join(' ').toLowerCase();
+    return q.every(t=>hay.includes(t));
+  }).sort((a,b)=>String(a['Site']||'').localeCompare(String(b['Site']||'')));
+  const order = ['Site specific training','Number of site trainings','Basic training','Training location','Training link','Background check','Drug screen','Fit test','Requirements','Other site requirements'];
+  const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform'].includes(k)));
+  const val = (k,v) => { v = String(v);
+    if(/^https?:\/\//i.test(v)) return '<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v.replace(/^https?:\/\/(www\.)?/i,''))+'</a>';
+    return esc(v); };
+  $('rq-list').innerHTML = rows.map(r=>'<article class="site"><h3>'+esc(r['Site']||'Unnamed site')+'</h3><div class="chips">'+
+      (r['Division']?'<span class="chip">'+esc(r['Division'])+'</span>':'')+(r['Training Platform']?'<span class="chip plat">'+esc(r['Training Platform'])+'</span>':'')+'</div>'+
+      '<dl>'+fields(r).map(k=>'<dt>'+esc(k)+'</dt><dd>'+val(k,r[k])+'</dd>').join('')+'</dl></article>').join('')
+    || '<div class="empty">No sites match.</div>';
+  $('rq-count').textContent = rows.length+' of '+SR.rows.length+' sites';
 }
 
 // ---------- employee card ----------
@@ -761,10 +818,14 @@ const reset = () => { shown = PAGE; render(); };
 // events
 $('f-old').addEventListener('change',e=>{F.old=e.target.checked; reset();});
 $('f-clear').addEventListener('click',()=>{ MS.forEach(k=>F[k]=[]); F.st=[]; closePop(); reset(); });
-function setTab(t){ F.tab=t; ['results','overview'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); }); save(); }
+function setTab(t){ F.tab=t; ['results','overview','reqs'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); });
+  // the Employee / Location / Role / Course filters don't apply to the site list
+  $('filters').hidden = $('activechips').hidden = t==='reqs'; save(); }
 $('t-results').addEventListener('click',()=>setTab('results'));
 $('t-overview').addEventListener('click',()=>setTab('overview'));
 $('stchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
+$('t-reqs').addEventListener('click',()=>setTab('reqs'));
+const SAVED_TAB = F.tab;
 setTab(F.tab==='overview'?'overview':'results');
 $('tiles').addEventListener('click',e=>{ const b=e.target.closest('.tile'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
 $('locs').addEventListener('click',e=>{ const b=e.target.closest('.locrow'); if(!b) return; const l=b.dataset.loc; F.loc = F.loc.includes(l)?F.loc.filter(x=>x!==l):[...F.loc,l]; reset(); });
@@ -834,6 +895,7 @@ async function unlock(enc, pass){
 function start(data){
   $('gate').hidden = true; $('app').hidden = false;
   build(data); setupMS(); render();
+  if(data.siteReqs && data.siteReqs.rows && data.siteReqs.rows.length){ initSiteReqs(data.siteReqs); $('t-reqs').hidden = false; if(SAVED_TAB==='reqs') setTab('reqs'); }
   const g = new Date(data.generated);
   const ageH = (Date.now()-g.getTime())/3600000;
   $('fresh').innerHTML = '<span>Data refreshed <b>'+g.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</b></span>'+
