@@ -293,6 +293,8 @@ def get_site_requirements():
             if k not in cols:
                 cols.append(k)
     print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}")
+    for i, r in enumerate(rows[:3]):
+        print(f"::notice title=Site requirements row {i + 1}::" + json.dumps(r, ensure_ascii=False)[:2000].replace("%", "%25").replace("\n", "%0A"))
     return {"cols": cols, "rows": rows}
 
 
