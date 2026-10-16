@@ -254,7 +254,7 @@ def read_refresher(xlsx_bytes):
 
 # SharePoint fields that come with every list item but aren't part of the list itself.
 SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|Author|Editor|_|OData__|ComplianceAsset|GUID|Attachments|ContentType|"
-                     r"Identifier|IsFolder|Thumbnail|Link|Name$|FilenameWithExtension|Path|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
+                     r"Identifier|IsFolder|Thumbnail|LinkTitle|FilenameWithExtension|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
 
 
 def get_site_requirements():
