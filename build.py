@@ -261,7 +261,18 @@ SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|
 NICE_COL = {"Plant/ Mill Si": "Site", "Number of Site_x0020": "Number of site trainings", "Site Specific Traini": "Site specific training",
             "Basic Training Requi": "Basic training", "StudentLink": "Training link", "RandomSiteRequirements": "Other site requirements",
             "FIT Test Requirement": "Fit test", "Background Requirements": "Background check", "Drug Screen Type": "Drug screen"}
-SECRET_COL = re.compile(r"password|admin|directions|login|username|credential", re.I)
+SECRET_COL = re.compile(r"password|admin|login|username|credential", re.I)
+DIRECTIONS_COL = re.compile(r"directions", re.I)
+# Any sentence or line of the directions that talks about signing in is left out (the site is public).
+CRED_TEXT = re.compile(r"pass\s*word|passwd|\bpwd\b|\bpw\b|user\s*name|\buser\s*id\b|log\s*-?\s*in|sign\s*-?\s*in|credential|access\s*code|\bpin\b|"
+                       r"\bcode\s*(is|:)|@[A-Za-z]*\d|\b[A-Za-z]+\d{2,}\b.*\bexample\b", re.I)
+
+
+def safe_directions(text):
+    """Keep the directions, minus any sentence that mentions passwords, usernames, logins or codes."""
+    parts = re.split(r"(?<=[.!?])\s+|\n+", str(text))
+    kept = [p.strip() for p in parts if p.strip() and not CRED_TEXT.search(p)]
+    return " ".join(kept), len([p for p in parts if p.strip()]) - len(kept)
 
 
 def get_site_requirements():
@@ -277,6 +288,16 @@ def get_site_requirements():
         print(f"::warning title=Site requirements::The list flow didn't send back JSON (status {res.status_code}); skipping it.")
         return None
     items = body if isinstance(body, list) else (body.get("value") or body.get("body", {}).get("value") or [])
+    # Attachments (optional): the flow can add {"attachments": [{"ID": 3, "files": [{DisplayName, AbsoluteUri}, ...]}]}.
+    files_by_id = {}
+    for a in (body.get("attachments") or []) if isinstance(body, dict) else []:
+        files = a.get("files") or a.get("body") or []
+        if isinstance(files, dict):
+            files = files.get("value") or files.get("body") or []
+        files_by_id[str(a.get("ID") or a.get("Id") or "")] = [
+            {"name": f.get("DisplayName") or f.get("FileName") or "Attachment", "url": f.get("AbsoluteUri") or f.get("Url") or ""}
+            for f in files if isinstance(f, dict) and (f.get("AbsoluteUri") or f.get("Url"))]
+    dropped = 0
     def clean(v):
         if isinstance(v, dict):   # choice / person / lookup columns
             return v.get("Value") or v.get("DisplayName") or v.get("Title") or ""
@@ -286,17 +307,24 @@ def get_site_requirements():
     rows = []
     for it in items:
         row = {}
+        item_id = str(it.get("ID") or it.get("Id") or "")
         for k, v in it.items():
             if SP_SKIP.search(k) or k.endswith("#Id") or k.endswith("@odata.type") or "#" in k:
                 continue
             if SECRET_COL.search(k):   # passwords, admin logins and login directions never go on the public site
                 continue
             v = clean(v)
+            if DIRECTIONS_COL.search(k) and v:
+                v, n = safe_directions(v)
+                dropped += n
+                k = "Specific directions"
             if v not in ("", None):
                 row[k.replace("_x0020_", " ").replace("_x002f_", "/").replace("_x0028_", "(").replace("_x0029_", ")")] = v
         row = {NICE_COL.get(k, k): v for k, v in row.items() if k not in ("Title",)}
         if isinstance(row.get("Number of site trainings"), float) and row["Number of site trainings"].is_integer():
             row["Number of site trainings"] = int(row["Number of site trainings"])
+        if files_by_id.get(item_id):
+            row["Attachments"] = files_by_id[item_id]
         if row:
             rows.append(row)
     cols = []
@@ -304,7 +332,8 @@ def get_site_requirements():
         for k in r:
             if k not in cols:
                 cols.append(k)
-    print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}")
+    print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}; "
+          f"{dropped} direction sentences left out for mentioning logins; {sum(len(v) for v in files_by_id.values())} attachments")
     return {"cols": cols, "rows": rows}
 
 

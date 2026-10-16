@@ -554,12 +554,14 @@ function drawSiteReqs(){
     if(pl && String(r['Training Platform']||'').trim()!==pl) return false;
     const bg = $('rq-bg').value, rbg = String(r['Background check']||'').trim();
     if(bg && (bg==='__none' ? rbg!=='' : rbg!==bg)) return false;
-    const hay = Object.values(r).join(' ').toLowerCase();
+    const hay = Object.entries(r).map(([k,v])=>Array.isArray(v)? v.map(f=>f.name).join(' ') : v).join(' ').toLowerCase();
     return q.every(t=>hay.includes(t));
   }).sort((a,b)=>String(a['Site']||'').localeCompare(String(b['Site']||'')));
-  const order = ['Site specific training','Number of site trainings','Basic training','Training location','Training link','Background check','Drug screen','Fit test','Requirements','Other site requirements'];
+  const order = ['Site specific training','Number of site trainings','Basic training','Training location','Training link','Background check','Drug screen','Fit test','Requirements','Other site requirements','Specific directions','Attachments'];
   const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform'].includes(k)));
-  const val = (k,v) => { v = String(v);
+  const val = (k,v) => {
+    if(Array.isArray(v)) return v.map(f=>'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a>').join('<br>');
+    v = String(v);
     if(/^https?:\/\//i.test(v)) return '<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v.replace(/^https?:\/\/(www\.)?/i,''))+'</a>';
     return esc(v); };
   $('rq-list').innerHTML = rows.map(r=>'<article class="site"><h3>'+esc(r['Site']||'Unnamed site')+'</h3><div class="chips">'+
