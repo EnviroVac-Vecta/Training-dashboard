@@ -359,7 +359,14 @@ function build(data){
     r.hay = (r.name+' '+r.id+' '+r.course).toLowerCase();
     return r;
   });
+  // HSI also carries TAPPISAFE courses, named with their TAPPI code, e.g. "... Mill and PSM Orientatio (12TIPROM)".
+  // Give them the same name as the TAPPI file uses so each course is listed once, and let them count for site readiness.
+  RECS.forEach(r=>{ if(/\(\s*12[A-Z0-9]+\s*\)\s*$/i.test(r.course||'') && window.PLANT){ const p=window.PLANT.classify(r.course); if(p){ r.course=p.name; r.plant=p; r.hay=(r.name+' '+r.id+' '+r.course).toLowerCase(); } } });
   if(data.tappi && data.tappi.rows) addTappi(data.tappi);
+  // The same completion can come from both HSI and the TAPPI file: keep one (the TAPPI copy).
+  { const seen=new Set(RECS.filter(r=>r.source==='TAPPI').map(r=>r.empKey+'|'+r.course.toLowerCase()+'|'+isoD(r.completed)));
+    RECS = RECS.filter(r=>r.source==='TAPPI' || !r.plant || !seen.has(r.empKey+'|'+r.course.toLowerCase()+'|'+isoD(r.completed))); }
+  RECS.forEach(r=>{ const p=r.plant; if(p && p.mill){ const m = MILLS.get(p.mk) || MILLS.set(p.mk,{mk:p.mk, name:p.mill, psm:false}).get(p.mk); if(p.kind==='psm'||p.kind==='millpsm') m.psm = true; } });
   if(data.refresher && data.refresher.rows) addRefresher(data.refresher);
   // A blank "no course" row only means something when the employee has no other records.
   const hasCourse = new Set(RECS.filter(r=>r.course).map(r=>r.empKey));
