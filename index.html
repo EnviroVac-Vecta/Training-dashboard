@@ -668,7 +668,7 @@ function drawSiteReqs(){
     const o = Object.assign({}, r); delete o['Number of site trainings'];
     if(basic+site) o['Number of trainings'] = (basic+site)+'  ('+(basic?'1 basic + ':'')+site+' site specific)';
     return o; };
-  const order = ['Number of trainings','Basic training','Site specific training','Site training time','Background check','Drug screen','Fit test','Requirements','Training Location','Training location','Training link','Other site requirements','Specific directions','Attachments'];
+  const order = ['Number of trainings','Basic training','Site specific training','GCF sites are','Site training time','Background check','Drug screen','Fit test','Requirements','Training Location','Training location','Training link','Other site requirements','Specific directions','Attachments'];
   let cur = null;
   const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform','_lineTimes'].includes(k)));
   const val = (k,v) => {
