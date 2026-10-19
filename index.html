@@ -626,11 +626,14 @@ function renderRefresher(){
 // ---------- Site Requirements tab (Microsoft List: Vecta and Envirovac Training Site Specific Requirements) ----------
 // ---------- Course lengths (TAPPISAFE, course_lengths.json) - same matching as course_minutes() in build.py ----------
 // ---------- Course lengths: build.py works out {course name: minutes} (TAPPISAFE course list + site times file) ----------
-let COURSE_LEN = {};
-const courseMin = name => (name in COURSE_LEN) ? COURSE_LEN[name] : null;
+let COURSE_LEN = {}, COURSE_LEN_N = {};
+// plant-site records carry a tidied name ("... Orientation" without the "(12TIPROM)" code), so also look up by a loose key
+const lkey = t => String(t||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[–—]/g,'-').replace(/[^a-z0-9]+/g,'');
+const courseMin = name => (name in COURSE_LEN) ? COURSE_LEN[name] : (lkey(name) in COURSE_LEN_N ? COURSE_LEN_N[lkey(name)] : null);
 const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', m%60?(m%60)+' min':''].filter(Boolean).join(' ');
 function setLengths(data){
   COURSE_LEN = data.courseLen || {};
+  Object.entries(COURSE_LEN).forEach(([k,m])=>{ const n=lkey(k); if(n && !(n in COURSE_LEN_N)) COURSE_LEN_N[n]=m; });
   RECS.forEach(r=>{ r.len = courseMin(r.course); });
   REF.rows.forEach(r=>{ r.len = courseMin(r.req); });
 }
