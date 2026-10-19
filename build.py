@@ -289,6 +289,70 @@ def previous_site_requirements():
     return None
 
 
+# ---------- TAPPISAFE course lengths (course_lengths.json, from TappiSafe_Course_Lengths.xlsx) ----------
+def _ln(text):
+    text = re.sub(r"\([^)]*\)", " ", str(text or "").lower())
+    return re.sub(r"[^a-z0-9]+", " ", text).strip()
+
+
+def load_lengths():
+    try:
+        with open(os.path.join(HERE, "course_lengths.json")) as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"::warning title=Course lengths::course_lengths.json not read ({e}); no course times shown.")
+        return []
+
+
+LENGTHS = load_lengths()
+_BY_CODE = {c["code"].upper(): c["min"] for c in LENGTHS if c.get("code")}
+_BY_NAME = {_ln(c["course"]): c["min"] for c in LENGTHS}
+HAS_TIME = re.compile(r"\(\s*\d[^)]*\b(min|mins|minutes|hr|hrs|hour|hours)\b[^)]*\)\s*$", re.I)
+
+
+def course_minutes(name):
+    """Minutes for a TAPPISAFE course name (same matching as courseMin() in index.html), or None."""
+    for code in re.findall(r"\(([A-Za-z0-9]{5,})\)", str(name or "")):
+        if code.upper() in _BY_CODE:
+            return _BY_CODE[code.upper()]
+    n = _ln(name)
+    if not n:
+        return None
+    for cand in (n, re.sub(r"^tappi ?safe ", "", n)):
+        if cand in _BY_NAME:
+            return _BY_NAME[cand]
+    best = None
+    for cn, m in _BY_NAME.items():
+        # a cut-off name ("...Mill and PSM Orientatio") or a line that names the course inside other words
+        if (len(n) >= 15 and cn.startswith(n)) or (len(cn) >= 15 and f" {cn} " in f" {n} "):
+            if best is None or len(cn) > best[0]:
+                best = (len(cn), m)
+    return best[1] if best else None
+
+
+def fmt_minutes(m):
+    h, mm = divmod(int(m), 60)
+    return " ".join(x for x in (f"{h} hr" if h else "", f"{mm} min" if mm else "") if x)
+
+
+def list_time_report(rows):
+    """Print, per site, the Site specific training text with each course's time added in (), ready to paste into the list."""
+    out, missing = [], set()
+    for r in rows:
+        lines = [x.strip() for x in re.split(r"\r?\n|;\s*(?=\S)", str(r.get("Site specific training") or "")) if x.strip()]
+        if not lines:
+            continue
+        new = []
+        for x in lines:
+            m = None if HAS_TIME.search(x) else course_minutes(x)
+            if m is None and not HAS_TIME.search(x):
+                missing.add(x)
+            new.append(f"{x} ({fmt_minutes(m)})" if m is not None else x)
+        if new != lines:
+            out.append({"site": r.get("Site", ""), "old": "\n".join(lines), "new": "\n".join(new)})
+    print("::notice title=List times::" + json.dumps({"changes": out, "noMatch": sorted(missing)})[:60000])
+
+
 def get_site_requirements():
     """Rows of the "Vecta and Envirovac Training Site Specific Requirements" Microsoft List, through the SITE_REQS_URL flow."""
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
@@ -374,6 +438,7 @@ def get_site_requirements():
     print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}; "
           f"{dropped} direction sentences left out for mentioning logins; HASC link filled in for {hasc_filled} sites; {sum(len(v) for v in files_by_id.values())} attachments "
           f"(flow sends attachments: {'yes, ' + str(len(body.get('attachments') or [])) + ' items checked' if isinstance(body, dict) and 'attachments' in body else 'no'})")
+    list_time_report(rows)
     return {"cols": cols, "rows": rows}
 
 
@@ -404,6 +469,8 @@ def main():
     refresher = read_refresher(ref_bytes) if ref_bytes else None
     if refresher:
         data["refresher"] = refresher
+    if LENGTHS:
+        data["courseLengths"] = LENGTHS
     site_reqs = get_site_requirements()
     if site_reqs:
         data["siteReqs"] = site_reqs

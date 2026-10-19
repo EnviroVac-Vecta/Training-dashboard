@@ -1,0 +1,902 @@
+[
+{
+"course": "TAPPISAFE Basic Orientation",
+"code": "12TSBAS",
+"min": 90
+},
+{
+"course": "TAPPISAFE Basic Orientation French",
+"code": "12TSBASF",
+"min": 90
+},
+{
+"course": "TAPPISAFE Basic Orientation Spanish",
+"code": "12TSBASS",
+"min": 90
+},
+{
+"course": "TAPPISAFE Basic Refresher Orientation",
+"code": "12TSREF",
+"min": 90
+},
+{
+"course": "TAPPISAFE Converting Orientation",
+"code": "12TSCONV",
+"min": 45
+},
+{
+"course": "Valentra Site Orientation - Baytown Remote Proctored",
+"code": "12VALBAR",
+"min": 60
+},
+{
+"course": "TAPPISAFE 101 - Aerial Lift",
+"code": "12TSAER",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Asbestos Awareness",
+"code": "12TSASB",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Back Safety",
+"code": "12TSBS",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Bloodborne Pathogens",
+"code": "12TSBBP",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Compressed Gas Cylinders",
+"code": "12TSCPG",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Confined Space",
+"code": "12TSCFSP",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Confined Space Attendant",
+"code": "12TSCSA",
+"min": 60
+},
+{
+"course": "TAPPISAFE 101 - Confined Space Spanish",
+"code": "12TSCSS",
+"min": 60
+},
+{
+"course": "TAPPISAFE 101 - COVID 19 Prevention in the Workplace",
+"code": "12TSCOV",
+"min": 15
+},
+{
+"course": "TAPPISAFE 101 - Crane Safety",
+"code": "12TSCRAN",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - CSA Z462",
+"code": "12TCSAZ",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Defensive Driving",
+"code": "12TSDD",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - DOT HAZMAT Transportation Security",
+"code": "12TSDOT",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Dust Mitigation",
+"code": "12TSDUST",
+"min": 60
+},
+{
+"course": "TAPPISAFE 101 - Electrical Safe Work Practices",
+"code": "12TSELSW",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Ergonomics",
+"code": "12TSERG",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Fall Protection",
+"code": "12TSFP",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Fall Protection Spanish",
+"code": "12TSFPS",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Fatigue Management",
+"code": "12TSFAT",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Fire Extinguisher Basics",
+"code": "12TSFEB",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Fire Safety",
+"code": "12TSFIRS",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Fire Watch Training",
+"code": "12TSFWAT",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - First Aid and CPR Safety",
+"code": "12TSFACP",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Forklift Safety",
+"code": "12TSFKSA",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Hazard Communication",
+"code": "12TSHAZ",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - HAZWOPER First Responder",
+"code": "12TSHZFR",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Heat Stress",
+"code": "12TSHTS",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Hydrogen Sulfide",
+"code": "12TSHYDS",
+"min": 15
+},
+{
+"course": "TAPPISAFE 101 - Lead Awareness",
+"code": "12TSLD",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Lockout/Tagout",
+"code": "12TSLOTO",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - NFPA 70E Standard Training",
+"code": "12TSNFPA",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Office Safety",
+"code": "12TSOFS",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Personal Protective Equipment",
+"code": "12TSPPE",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Respirator Fit Testing",
+"code": "12TSRFT",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Respiratory Protection",
+"code": "12TSRESP",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Scaffolding",
+"code": "12TSCFLD",
+"min": 15
+},
+{
+"course": "TAPPISAFE 101 - Silica",
+"code": "12TSSili",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Slips, Trips, and Falls",
+"code": "12TSSTF",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Trenching and Excavation Safety",
+"code": "12TSTE",
+"min": 45
+},
+{
+"course": "TAPPISAFE 101 - Warning Signs and Labels",
+"code": "12TSWSL",
+"min": 30
+},
+{
+"course": "TAPPISAFE 101 - Welding, Cutting, and Brazing",
+"code": "12TSWCB",
+"min": 45
+},
+{
+"course": "American Kraft Paper - Pine Bluff Mill Orientation",
+"code": "12TTWPB",
+"min": 45
+},
+{
+"course": "Clearwater Paper - Augusta Mill Orientation",
+"code": "12TCLA",
+"min": 45
+},
+{
+"course": "Clearwater Paper \u2013 Augusta PSM Orientation",
+"code": "12TCLAP",
+"min": 30
+},
+{
+"course": "Clearwater Paper - Cypress Bend Mill Orientation",
+"code": "12TCWCB",
+"min": 45
+},
+{
+"course": "Clearwater Paper - Cypress Bend Mill PSM Orientation",
+"code": "12TCWCBP",
+"min": 45
+},
+{
+"course": "Clearwater Paper - Elwood Mill Orientation",
+"code": "12TCPEL",
+"min": 30
+},
+{
+"course": "Clearwater Paper - Elwood Mill Spanish",
+"code": "12TCPELS",
+"min": 30
+},
+{
+"course": "Clearwater Paper - Las Vegas Mill Orientation",
+"code": "12TCPLV",
+"min": 45
+},
+{
+"course": "Clearwater Paper - Lewiston Mill Orientation",
+"code": "12TCLWL",
+"min": 45
+},
+{
+"course": "Clearwater Paper - Lewiston PSM Orientation",
+"code": "12TCLWLP",
+"min": 90
+},
+{
+"course": "Domtar - Ashdown Truck Driver Orientation",
+"code": "12TDMADT",
+"min": 15
+},
+{
+"course": "Domtar - Ashdown Mill Orientation",
+"code": "12TDMASH",
+"min": 45
+},
+{
+"course": "Domtar - Hawesville Mill Orientation",
+"code": "12TDMHV",
+"min": 45
+},
+{
+"course": "Domtar \u2013 Hawesville Visitor Orientation",
+"code": "12TDMHVV",
+"min": 15
+},
+{
+"course": "Domtar - Johnsonburg Mill Orientation",
+"code": "12TDJB",
+"min": 45
+},
+{
+"course": "Domtar - Kingsport Mill Orientation",
+"code": "12TDMKP",
+"min": 45
+},
+{
+"course": "Domtar - Nekoosa Mill Orientation",
+"code": "12TDMNK",
+"min": 45
+},
+{
+"course": "Domtar - Nekoosa PSM Orientation",
+"code": "12TDMNP",
+"min": 30
+},
+{
+"course": "Domtar - Plymouth Mill Orientation",
+"code": "12TDPL",
+"min": 45
+},
+{
+"course": "Domtar Johnsonburg PSM Orientation",
+"code": "12TDJBP",
+"min": 45
+},
+{
+"course": "Employer of Record",
+"code": "12EOR",
+"min": 15
+},
+{
+"course": "Essity - Barton Mill Orientation",
+"code": "12TEBAR",
+"min": 45
+},
+{
+"course": "Essity - Menasha Plant Orientation",
+"code": "12TEMEN",
+"min": 60
+},
+{
+"course": "Essity - Middletown Mill Orientation",
+"code": "12TEMID",
+"min": 45
+},
+{
+"course": "Essity - Neenah Mill Orientation",
+"code": "12TENEE",
+"min": 30
+},
+{
+"course": "Finch Paper LLC Mill Orientation",
+"code": "12TSFSO",
+"min": 30
+},
+{
+"course": "Georgia Pacific - Port Hudson Mill Orientation",
+"code": "1232GAPC",
+"min": 75
+},
+{
+"course": "Georgia-Pacific - Crossett CPS",
+"code": "PSM",
+"min": 45
+},
+{
+"course": "Georgia-Pacific - Crossett Escorted Visitor Orientation",
+"code": "12TGPCV",
+"min": 15
+},
+{
+"course": "Georgia-Pacific - Crossett Mill Orientation",
+"code": "12TGPC",
+"min": 45
+},
+{
+"course": "Global Cellulose Fibers- Columbus Mill Orientation",
+"code": "12TGCC",
+"min": 60
+},
+{
+"course": "Global Cellulose Fibers- Columbus Modified Fiber Orientation",
+"code": "12TGCCM",
+"min": 60
+},
+{
+"course": "Global Cellulose Fibers- Flint River Escorted Visitor Orientation",
+"code": "12TGCFRV",
+"min": 15
+},
+{
+"course": "Global Cellulose Fibers- Flint River Mill and PSM Orientation",
+"code": "12TGCFR",
+"min": 75
+},
+{
+"course": "Global Cellulose Fibers- Franklin Mill and PSM Orientation",
+"code": "12TGCF",
+"min": 75
+},
+{
+"course": "Global Cellulose Fibers- Franklin Mill Escorted Visitor Orientation",
+"code": "12TGCFV",
+"min": 15
+},
+{
+"course": "Global Cellulose Fibers- New Bern Mill and PSM Orientation",
+"code": "12TGCN",
+"min": 105
+},
+{
+"course": "Global Cellulose Fibers- Port Wentworth Escorted Visitor Orientation",
+"code": "12TGCPV",
+"min": 15
+},
+{
+"course": "Global Cellulose Fibers- Port Wentworth Mill and PSM Orientation",
+"code": "12TGCP",
+"min": 60
+},
+{
+"course": "Global Cellulose Fibers- Riegelwood Mill and PSM Orientation",
+"code": "12TGCR",
+"min": 60
+},
+{
+"course": "Graphic Packaging - Kalamazoo Mill Orientation",
+"code": "12TGPIK",
+"min": 45
+},
+{
+"course": "Graphic Packaging - Macon Mill Orientation",
+"code": "12TGPMC",
+"min": 45
+},
+{
+"course": "Graphic Packaging - Monroe Beverage Orientation",
+"code": "12TGPMB",
+"min": 60
+},
+{
+"course": "Graphic Packaging - Perry Orientation",
+"code": "12TGPP",
+"min": 120
+},
+{
+"course": "Graphic Packaging - Prosperity Extrusion Orientation",
+"code": "12TGPIP",
+"min": 45
+},
+{
+"course": "Graphic Packaging - Texarkana Mill Orientation",
+"code": "12TIPTK",
+"min": 45
+},
+{
+"course": "Graphic Packaging - Waco Mill Orientation",
+"code": "12TGPIW",
+"min": 60
+},
+{
+"course": "Graphic Packaging - West Monroe Mill Orientation",
+"code": "12TGPWM",
+"min": 60
+},
+{
+"course": "Green Bay Packaging - Green Bay Escorted Visitor Orientation",
+"code": "12TGBMDV",
+"min": 15
+},
+{
+"course": "Green Bay Packaging - Green Bay Mill Orientation",
+"code": "12TGBMD",
+"min": 45
+},
+{
+"course": "Green Bay Packaging - Morrilton Mill Orientation",
+"code": "12TGBARK",
+"min": 45
+},
+{
+"course": "Green Bay Packaging - Pinecrest Lumber Orientation",
+"code": "12TPCLD",
+"min": 45
+},
+{
+"course": "Green Bay Packaging- Green Bay Shipping Container Division Orientation",
+"code": "12TGBGB",
+"min": 45
+},
+{
+"course": "Ingevity - Crossett Mill Orientation",
+"code": "12TINC",
+"min": 45
+},
+{
+"course": "Ingevity - DeRidder Mill Orientation",
+"code": "12TIND",
+"min": 30
+},
+{
+"course": "International Paper - Bogalusa Escorted Visitor Orientation",
+"code": "12TIPBV",
+"min": 15
+},
+{
+"course": "International Paper - Bogalusa Mill and PSM Orientation",
+"code": "12TIPBOG",
+"min": 90
+},
+{
+"course": "International Paper - Bogalusa Security Orientation",
+"code": "12TIPBGS",
+"min": 15
+},
+{
+"course": "International Paper - Cedar River Mill Orientation",
+"code": "12TIPCR",
+"min": 45
+},
+{
+"course": "International Paper - Courtland Mill Orientation",
+"code": "12TIPCRT",
+"min": 30
+},
+{
+"course": "International Paper - Georgetown Mill Orientation",
+"code": "12TIPGT",
+"min": 45
+},
+{
+"course": "International Paper - Henderson Escorted Visitor Orientation",
+"code": "12TIPHEV",
+"min": 15
+},
+{
+"course": "International Paper - Henderson Mill Orientation",
+"code": "12TIPHE",
+"min": 45
+},
+{
+"course": "International Paper - Mansfield Mill and PSM Orientation",
+"code": "12TIPMAN",
+"min": 75
+},
+{
+"course": "International Paper - Mansfield Utilities Orientation",
+"code": "12TIPMAU",
+"min": 30
+},
+{
+"course": "International Paper - Maysville Mill Orientation",
+"code": "12TIPMV",
+"min": 45
+},
+{
+"course": "International Paper - Newport Mill Orientation",
+"code": "12TIPNP",
+"min": 45
+},
+{
+"course": "International Paper - North American Container Converting Plants Orientatio",
+"code": "12TIPCG",
+"min": 45
+},
+{
+"course": "International Paper - Orange Mill Orientation",
+"code": "12TIPO",
+"min": 60
+},
+{
+"course": "International Paper - Orange Mill Orientation and PSM Orientation Spanish",
+"code": "12TIPOS",
+"min": 45
+},
+{
+"course": "International Paper - Pensacola Escorted Visitor Orientation",
+"code": "12TIPPV",
+"min": 15
+},
+{
+"course": "International Paper - Pensacola Mill and PSM Orientation",
+"code": "12TIPPC",
+"min": 75
+},
+{
+"course": "International Paper - Pine Hill Mill and PSM Orientation",
+"code": "12TIPPHM",
+"min": 75
+},
+{
+"course": "International Paper - Prattville Mill and PSM Orientation",
+"code": "12TIPPRT",
+"min": 60
+},
+{
+"course": "International Paper - Red River Escorted Visitor Orientation",
+"code": "12TIPRRV",
+"min": 15
+},
+{
+"course": "International Paper - Red River Mill and PSM Orientation",
+"code": "12TIPRR",
+"min": 90
+},
+{
+"course": "International Paper - Red Strap Safety Orientation",
+"code": "12TIPRS",
+"min": 15
+},
+{
+"course": "International Paper - Riverdale/Selma Mill and PSM Orientation",
+"code": "12TIPR",
+"min": 75
+},
+{
+"course": "International Paper - Rome Escorted Visitor Orientation",
+"code": "12TIPRMV",
+"min": 30
+},
+{
+"course": "International Paper - Rome Mill and PSM Orientation",
+"code": "12TIPROM",
+"min": 60
+},
+{
+"course": "International Paper - Savannah Mill Orientation",
+"code": "12TIPSV",
+"min": 75
+},
+{
+"course": "International Paper - Springfield Escorted Visitor Orientation",
+"code": "12TIPSFV",
+"min": 15
+},
+{
+"course": "International Paper - Springfield Mill and PSM Orientation",
+"code": "12TIPSF",
+"min": 75
+},
+{
+"course": "International Paper - Valliant Mill and PSM Orientation",
+"code": "12TIPV",
+"min": 75
+},
+{
+"course": "International Paper - Vicksburg Mill and PSM Orientation",
+"code": "12TIPVK",
+"min": 75
+},
+{
+"course": "International Paper - Xalapa Mill Orientation",
+"code": "12TIPXL",
+"min": 45
+},
+{
+"course": "International Paper - Xalapa Mill Orientation Spanish",
+"code": "12TIPXLS",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Beech Island Orientation",
+"code": "12TKCBI",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Chester Mill Orientation",
+"code": "12TKCCH",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Chester Mill Visitor Orientation",
+"code": "12TKCCRA",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Huntsville Electrical Orientation",
+"code": "12TKCHC",
+"min": 30
+},
+{
+"course": "Kimberly Clark - Huntsville Mill Orientation",
+"code": "12TKCH",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Huntsville Mill Visitor Orientation",
+"code": "12TKCHV",
+"min": 30
+},
+{
+"course": "Kimberly Clark - Jenks Mill Orientation",
+"code": "12TKCCJ",
+"min": 45
+},
+{
+"course": "Kimberly Clark - Maumelle Mill Orientation",
+"code": "12TKCM",
+"min": 45
+},
+{
+"course": "Knowlton Technologies - Watertown Orientation",
+"code": "12TSKWT",
+"min": 45
+},
+{
+"course": "KTG - Memphis Mill Orientation",
+"code": "12TKTGM",
+"min": 45
+},
+{
+"course": "Liberty Paper Mill Orientation",
+"code": "12TLIBTY",
+"min": 45
+},
+{
+"course": "McKinley Paper - Prewitt Mill Orientation",
+"code": "12TMKP",
+"min": 45
+},
+{
+"course": "New-Indy - Hartford City Mill Orientation",
+"code": "12TNIH",
+"min": 45
+},
+{
+"course": "Packaging Corporation of America\u2013Massillon Mill Orientation",
+"code": "12TPCM",
+"min": 60
+},
+{
+"course": "Packaging Corporation of America\u2013Riverville Mill Orientation",
+"code": "12TPCRM",
+"min": 45
+},
+{
+"course": "Phoenix Paper - Wickliffe Mill Orientation",
+"code": "12TPPW",
+"min": 60
+},
+{
+"course": "Pineland Farms Orientation",
+"code": "12TSPINE",
+"min": 45
+},
+{
+"course": "Port Townsend Paper Mill Orientation",
+"code": "12TPTPC",
+"min": 30
+},
+{
+"course": "Pratt Industries - Conyers Mill Orientation",
+"code": "12TPICNY",
+"min": 45
+},
+{
+"course": "Rand-Whitney - Montville Containerboard Orientation",
+"code": "12TRWMC",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Battle Creek Mill Orientation",
+"code": "12TRTBC",
+"min": 60
+},
+{
+"course": "Smurfit WestRock - Charleston Mill Orientation",
+"code": "12TKSCH",
+"min": 45
+},
+{
+"course": "Smurfit Westrock - Evadale Mill Orientation",
+"code": "12TSWEV",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Florence Hot Work Management Orientation",
+"code": "12TRTFHW",
+"min": 30
+},
+{
+"course": "Smurfit WestRock - Florence Mill Orientation",
+"code": "12TRTFM",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Florence Mill Spanish Orientation",
+"code": "12TRTFMS",
+"min": 60
+},
+{
+"course": "Smurfit WestRock - Longview Mill Orientation",
+"code": "12TWRL",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Lynchburg Mill Orientation",
+"code": "12TWRLB",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Missisquoi Mill Orientation",
+"code": "12TWRM",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Solvay Mill Orientation",
+"code": "12TWRSM",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - St. Paul Mill Orientation",
+"code": "12TWRSP",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - Stroudsburg Mill Orientation",
+"code": "12TRTSTB",
+"min": 60
+},
+{
+"course": "Smurfit WestRock - Tacoma Mill Orientation",
+"code": "12TRTTAC",
+"min": 45
+},
+{
+"course": "Smurfit WestRock - West Point Mill Orientation",
+"code": "12TWWPM",
+"min": 60
+},
+{
+"course": "Smurfit WestRock - WestRock West Point Mill Orientation",
+"code": "Spanish",
+"min": 60
+},
+{
+"course": "Smurfit WestRock - WestRock West Point PSM Orientation",
+"code": "12TWRWPP",
+"min": 30
+},
+{
+"course": "Smurfit WestRock- West Point Escorted Visitor Orientation",
+"code": "12TRTWPV",
+"min": 30
+},
+{
+"course": "ST Paper - Oconto Falls Mill Orientation",
+"code": "12TSTO",
+"min": 45
+},
+{
+"course": "ST Tissue - Franklin Mill Orientation",
+"code": "12TSTF",
+"min": 45
+},
+{
+"course": "Suzano-Pine Bluff Mill Orientation",
+"code": "12TSPB",
+"min": 90
+},
+{
+"course": "Sylvamo - Eastover Mill Orientation",
+"code": "12TSLEAS",
+"min": 60
+},
+{
+"course": "Sylvamo - Ticonderoga Mill Orientation",
+"code": "12TSLTIG",
+"min": 45
+},
+{
+"course": "Sylvamo - Ticonderoga PSM Orientation",
+"code": "12TLTPS",
+"min": 15
+},
+{
+"course": "Twin Rivers Paper - Madawaska Mill Orientation",
+"code": "12TTWM",
+"min": 45
+},
+{
+"course": "Twin Rivers Paper - New York Mill Orientations",
+"code": "12TTRNY",
+"min": 45
+},
+{
+"course": "COVID 19 Screening Questionnaire",
+"code": "12COVID",
+"min": 15
+}
+]

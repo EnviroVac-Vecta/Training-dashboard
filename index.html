@@ -202,6 +202,7 @@ td.num{text-align:right}
 td.course{min-width:260px;max-width:420px}
 .who{all:unset;cursor:pointer;font-weight:500;color:var(--fg);border-bottom:1px dotted var(--muted)}
 .who:hover{color:var(--accent);border-color:var(--accent)}
+.len{color:var(--muted);font-size:12px;white-space:nowrap}
 .sub{display:block;font-family:var(--f-mono);font-size:11px;color:var(--muted)}
 .pill{display:inline-block;white-space:nowrap;font-size:11.5px;font-weight:600;padding:2px 8px;border-radius:999px;background:var(--c);color:var(--pill-ink)}
 .pill.soft{background:transparent;color:var(--c);box-shadow:inset 0 0 0 1.5px var(--c)}
@@ -323,7 +324,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
     <section class="panel">
       <h2>Site Specific</h2>
-      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date and days left.</p>
+      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the TAPPISAFE course list; blank for courses not on it).</p>
       <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
       <h3>Status colors</h3>
       <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
@@ -354,6 +355,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <p><b>What it holds:</b> one card per customer site from the <i>Vecta and EnviroVac Training Site Specific Requirements</i> list: division, training platform, site specific training and how many, basic training, training location and link, background check, drug screen, fit test, other requirements, specific directions and attached documents.</p>
       <ul class="plain">
         <li>Search any word (for example <i>TWIC</i> or <i>PFT</i>) and filter by <b>Division</b>, <b>Training platform</b> or <b>Background check</b>. <i>Not listed</i> shows sites with no background check entered.</li>
+        <li>Each site specific training that is a TAPPISAFE course shows the time it takes to complete in ( ).</li>
         <li><b>Specific directions</b> leave out any sentence about usernames, passwords or logins; ask the training department for those.</li>
         <li><b>Attachments</b> open from the Microsoft List, so you need access to the list to open them.</li>
         <li>Changes made in the list show up here the next morning.</li>
@@ -622,6 +624,26 @@ function renderRefresher(){
 }
 
 // ---------- Site Requirements tab (Microsoft List: Vecta and Envirovac Training Site Specific Requirements) ----------
+// ---------- Course lengths (TAPPISAFE, course_lengths.json) - same matching as course_minutes() in build.py ----------
+let LEN_CODE = {}, LEN_NAME = {};
+const lnorm = t => String(t||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
+const HAS_TIME = /\(\s*\d[^)]*\b(min|mins|minutes|hr|hrs|hour|hours)\b[^)]*\)\s*$/i;
+function courseMin(name){
+  for(const m of String(name||'').matchAll(/\(([A-Za-z0-9]{5,})\)/g)){ const c=m[1].toUpperCase(); if(c in LEN_CODE) return LEN_CODE[c]; }
+  const n = lnorm(name); if(!n) return null;
+  for(const c of [n, n.replace(/^tappi ?safe /,'')]) if(c in LEN_NAME) return LEN_NAME[c];
+  let best = null;
+  for(const [cn,m] of Object.entries(LEN_NAME))
+    if((n.length>=15 && cn.startsWith(n)) || (cn.length>=15 && (' '+n+' ').includes(' '+cn+' ')))
+      if(!best || cn.length>best[0]) best=[cn.length,m];
+  return best ? best[1] : null;
+}
+const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', m%60?(m%60)+' min':''].filter(Boolean).join(' ');
+function setLengths(data){
+  (data.courseLengths||[]).forEach(c=>{ if(c.code) LEN_CODE[c.code.toUpperCase()]=c.min; LEN_NAME[lnorm(c.course)]=c.min; });
+  RECS.forEach(r=>{ r.len = courseMin(r.course); });
+}
+
 let SR = null;
 function initSiteReqs(sr){
   SR = sr;
@@ -661,7 +683,9 @@ function drawSiteReqs(){
     const lines = v.split(/\r?\n|;\s*(?=\S)/).map(x=>x.trim()).filter(Boolean);
     const li = x => '<li>'+(/^https?:\/\//i.test(x)?'<a href="'+esc(x)+'" target="_blank" rel="noopener">'+esc(x.replace(/^https?:\/\/(www\.)?/i,''))+'</a>':esc(x))+'</li>';
     // site specific trainings are numbered (1., 2., 3.) so the count is easy to see, even when there is only one
-    if(k==='Site specific training' && lines.length) return '<ol class="lines">'+lines.map(li).join('')+'</ol>';
+    // ...with the time each course takes, when it is a TAPPISAFE course on the course-length list
+    const timed = x => { const m = HAS_TIME.test(x) ? null : courseMin(x); return li(x).replace('</li>', m!=null ? ' <span class="len">('+fmtMin(m)+')</span></li>' : '</li>'); };
+    if(k==='Site specific training' && lines.length) return '<ol class="lines">'+lines.map(timed).join('')+'</ol>';
     if(lines.length>1) return '<ul class="lines">'+lines.map(li).join('')+'</ul>';
     if(/^https?:\/\//i.test(v)) return '<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v.replace(/^https?:\/\/(www\.)?/i,''))+'</a>';
     return esc(v); };
@@ -839,7 +863,7 @@ function chips(){
 
 const recCols = [
   ['name','Employee'],['loc','Location'],['role','Role'],['course','Course'],
-  ['completed','Completed'],['expire','Expires'],['days','Days left'],['st','Status']
+  ['completed','Completed'],['expire','Expires'],['days','Days left'],['st','Status'],['len','Length']
 ];
 const stOrder = Object.fromEntries(ST.map((s,i)=>[s.k,i]));
 function cmp(a,b,key){
@@ -880,9 +904,10 @@ function renderRecords(base, mills){
       '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+noteTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
-      '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td></tr>';
+      '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td>'+
+      '<td class="num" title="Time the course takes to complete (TAPPISAFE course list)">'+fmtMin(r.len)+'</td></tr>';
   }).join('');
-  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(8+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
+  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(9+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
   $('more').hidden = rows.length<=shown;
   $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
@@ -988,8 +1013,8 @@ $('tbl').addEventListener('click',e=>{
       lines = [['Employee ID','Name','Location','Role','Current','Expires 30 days','Expires 31-60','Expires 61-90','Expired','Failed','Not completed','Total']]
         .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.current,e.d30,e.d60,e.d90,e.expired,e.failed,e.notdone,e.total]));
     } else {
-      lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Replaced by retake']]
-        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],r.old?'Yes':'']));
+      lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Course Length','Replaced by retake']]
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],fmtMin(r.len),r.old?'Yes':'']));
     }
     // With a plant-site course picked, add the readiness and what is missing for each mill.
     const mills = F.view==='ref' ? [] : selMills();
@@ -1021,7 +1046,7 @@ async function unlock(enc, pass){
 }
 function start(data){
   $('gate').hidden = true; $('app').hidden = false;
-  build(data); setupMS(); render();
+  build(data); setLengths(data); setupMS(); render();
   if(data.siteReqs && data.siteReqs.rows && data.siteReqs.rows.length){ initSiteReqs(data.siteReqs); $('t-reqs').hidden = false; if(SAVED_TAB==='reqs') setTab('reqs'); }
   if(SAVED_TAB==='hsi') setTab('hsi');
   const g = new Date(data.generated);
