@@ -602,15 +602,18 @@ def get_site_requirements():
         if not row.get("Training link") and re.search(r"\bHASC\b", f"{row.get('Training Platform', '')} {row.get('Training Location', '')}", re.I):
             row["Training link"] = "https://www.hasc.com/"
             hasc_filled += 1
-        # Global Cellulose Fibers card: list the GCF mills (from the TAPPISAFE course list) under the site's note
-        if re.search(r"global cellulose|\bGCF\b", str(row.get("Site", "")), re.I):
+        # Global Cellulose Fibers and International Paper cards: list their mills (from the TAPPISAFE course list)
+        for pat, prefix, label in ((r"global cellulose|\bGCF\b", "Global Cellulose Fibers", "GCF sites are"),
+                                   (r"international paper", "International Paper", "International Paper sites are")):
+            if not re.search(pat, str(row.get("Site", "")), re.I) or re.search(r"specialist", str(row.get("Site", "")), re.I):
+                continue
             mills = []
             for c in LENGTHS:
-                mm = re.match(r"Global Cellulose Fibers\s*-\s*(.+?)\s+(Mill|Modified|Escorted)\b", c["course"])
+                mm = re.match(re.escape(prefix) + r"\s*-\s*(.+?)\s+(Mill|Modified|Escorted|Security|Utilities)\b", c["course"])
                 if mm and mm.group(1) not in mills:
                     mills.append(mm.group(1))
             if mills:
-                row["GCF sites are"] = "\n".join(sorted(mills))
+                row[label] = "\n".join(sorted(mills))
         if files_by_id.get(item_id):
             row["Attachments"] = files_by_id[item_id]
         if row:
