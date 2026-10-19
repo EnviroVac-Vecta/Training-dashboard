@@ -275,18 +275,41 @@ def safe_directions(text):
     return " ".join(kept), len([p for p in parts if p.strip()]) - len(kept)
 
 
+def previous_site_requirements():
+    """The site requirements currently on the live dashboard, so a slow or failed flow run doesn't blank the tab."""
+    try:
+        r = requests.get("https://envirovac-vecta.github.io/Training-dashboard/data.json", timeout=60)
+        prev = r.json().get("siteReqs") if r.status_code == 200 else None
+        if prev and prev.get("rows"):
+            print(f"::notice title=Site requirements::Kept {len(prev['rows'])} sites from the last good refresh.")
+            return prev
+    except Exception:
+        pass
+    return None
+
+
 def get_site_requirements():
     """Rows of the "Vecta and Envirovac Training Site Specific Requirements" Microsoft List, through the SITE_REQS_URL flow."""
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     url = secrets.get("SITE_REQS_URL") or os.environ.get("SITE_REQS_URL")
     if not url:
         return None
-    res = requests.post(url, json={}, timeout=120)
-    try:
-        body = res.json()
-    except Exception:
-        print(f"::warning title=Site requirements::The list flow didn't send back JSON (status {res.status_code}); skipping it.")
-        return None
+    # The flow walks every list item for attachments, which can be slow: wait longer and try up to 3 times.
+    body, why = None, ""
+    for attempt in range(3):
+        try:
+            res = requests.post(url, json={}, timeout=240)
+            b = res.json()
+            its = b if isinstance(b, list) else (b.get("value") or b.get("body", {}).get("value") or [])
+            if res.status_code == 200 and its:
+                body = b
+                break
+            why = f"status {res.status_code}, {len(its)} rows"
+        except Exception as e:
+            why = str(e)[:200]
+    if body is None:
+        print(f"::warning title=Site requirements::The list flow didn't send the list ({why}); keeping yesterday's site requirements.")
+        return previous_site_requirements()
     items = body if isinstance(body, list) else (body.get("value") or body.get("body", {}).get("value") or [])
     # Attachments (optional): the flow can add {"attachments": [{"ID": 3, "files": [{DisplayName, AbsoluteUri}, ...]}]}.
     files_by_id = {}
