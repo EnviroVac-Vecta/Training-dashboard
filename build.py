@@ -449,6 +449,7 @@ def site_length(text):
 
 
 SITE_TOTAL = set()
+MULTI_COURSE_SITES = {e["site"] for e in ISN_TIMES.values() if e.get("siteTotal")}
 
 
 def course_length_map(names):
@@ -457,11 +458,13 @@ def course_length_map(names):
     hsi_n = isn_n = 0
     for n in sorted(set(x for x in names if x)):
         e = ISN_TIMES.get(_hk(n))
+        if e and e["siteTotal"]:
+            # several courses at this site and the time is for all of them: no time per course (pay is per course taken)
+            SITE_TOTAL.add(n)
+            continue
         if e and e["min"] is not None:
             out[n] = e["min"]
             isn_n += 1
-            if e["siteTotal"]:
-                SITE_TOTAL.add(n)
             continue
         m = hsi_minutes(n)
         if m is not None:
@@ -470,12 +473,14 @@ def course_length_map(names):
             m = course_minutes(n)
         if m is None:
             e = site_length(n)
+            if e and e["site"] in MULTI_COURSE_SITES:
+                e = None   # that site's time covers several courses
             if e and e["min"] is not None:
                 m = e["min"]
                 by_site.setdefault(e["site"], []).append(n)
         if m is not None:
             out[n] = m
-    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time ({hsi_n} from the HSI hours sheet, {isn_n} ISNetworld courses, {len(SITE_TOTAL)} of them a site total). From the site times file: "
+    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time ({hsi_n} from the HSI hours sheet, {isn_n} ISNetworld courses; {len(SITE_TOTAL)} left blank because their site's time covers several courses). From the site times file: "
           + "; ".join(f"{k} -> {', '.join(v)}" for k, v in sorted(by_site.items())))[:3900].replace("%", "%25"))
     return out
 
@@ -666,7 +671,6 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
-    data["courseLenTotal"] = sorted(SITE_TOTAL)
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
         print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])
