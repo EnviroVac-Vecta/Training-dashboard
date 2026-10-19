@@ -378,6 +378,21 @@ for _c in HSI_HOURS:
     _BY_HSI.setdefault(_hk(_c["course"]), _c["min"])
 
 
+# HSI requirement names that are worded differently from the hours sheet
+HSI_ALIASES = {
+    "Mobile Elevated Work Platform Safety": "Mobile Elevating Work Platform Safety",
+    "Vehicle Spotter Training/Entrenamiento de Observadores de Vehículos": "Vehicle Spotter Training and Declaration-English Curriculum",
+    "OSHA 10 General": "OSHA 10hr General Industry",
+    "OSHA 30hr (1yr)": "OSHA 30hr General Industry",
+    "Slips, Trips, and Falls": "Slips/Trips/Falls",
+    "Hydroblasting and Industrial Vacuuming Safety Devices Training": "Hydroblasting and Industrial Vacuuming Safety Devices-English Curriculum",
+    "Air Monitor Training": "Air Monitoring-English",
+}
+for _a, _b in HSI_ALIASES.items():
+    if _hk(_b) in _BY_HSI:
+        _BY_HSI.setdefault(_hk(_a), _BY_HSI[_hk(_b)])
+
+
 def hsi_minutes(name):
     m = _BY_HSI.get(_hk(name))
     return m if m else None
@@ -482,8 +497,7 @@ def list_time_report(rows):
             out.append([r.get("Site", ""), [b for a, b in zip(lines, new) if a != b]])
     # annotations hold about 4,000 characters each, so the report goes out in parts
     unused = [e["site"] for e in SITE_LENGTHS if e["site"] not in site_hits]
-    text = json.dumps({"siteTimes": site_hits, "siteTimesNotMatched": unused, "allSites": sorted(str(r.get("Site", "")) for r in rows),
-                       "changes": out, "noMatch": sorted(missing), "alreadyTimed": sorted(timed)})
+    text = json.dumps({"changes": out, "siteTimes": site_hits, "siteTimesNotMatched": unused})
     for i in range(0, len(text), 3800):
         print(f"::notice title=List times {i // 3800 + 1}::" + text[i:i + 3800].replace("%", "%25").replace("\n", "%0A"))
 
