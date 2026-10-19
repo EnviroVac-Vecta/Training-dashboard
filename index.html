@@ -627,20 +627,31 @@ function renderRefresher(){
 // ---------- Course lengths (TAPPISAFE, course_lengths.json) - same matching as course_minutes() in build.py ----------
 let LEN_CODE = {}, LEN_NAME = {};
 const lnorm = t => String(t||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
-const HAS_TIME = /\(\s*\d[^)]*\b(min|mins|minutes|hr|hrs|hour|hours)\b[^)]*\)\s*$/i;
+const HAS_TIME = /\b\d+(\.\d+)?\s*(min|mins|minutes|hr|hrs|hour|hours)\b/i;   // the line already gives a time
+const LSTOP = new Set('site sites orientation orientatio mill contractor contractors training specific tappisafe tappi safe the and of for course plant facility general safety mills s'.split(' '));
+const LOTHER = /escorted|visitor|security|modified|utilities|psm/i;
+const ltoks = t => new Set(lnorm(t).split(' ').filter(w=>w.length>1 && !LSTOP.has(w)));
+let LEN_LIST = [];
 function courseMin(name){
-  for(const m of String(name||'').matchAll(/\(([A-Za-z0-9]{5,})\)/g)){ const c=m[1].toUpperCase(); if(c in LEN_CODE) return LEN_CODE[c]; }
-  const n = lnorm(name); if(!n) return null;
+  const text = String(name||'');
+  for(const m of text.matchAll(/\b([0-9]{2}[A-Za-z0-9]{3,})\b/g)){ const c=m[1].toUpperCase(); if(c in LEN_CODE) return LEN_CODE[c]; }
+  const n = lnorm(text); if(!n) return null;
   for(const c of [n, n.replace(/^tappi ?safe /,'')]) if(c in LEN_NAME) return LEN_NAME[c];
   let best = null;
   for(const [cn,m] of Object.entries(LEN_NAME))
     if((n.length>=15 && cn.startsWith(n)) || (cn.length>=15 && (' '+n+' ').includes(' '+cn+' ')))
       if(!best || cn.length>best[0]) best=[cn.length,m];
-  return best ? best[1] : null;
+  if(best) return best[1];
+  // every company/site word in the line is in the course name; only used when the answer is clear
+  const tk = ltoks(text); if(tk.size<2) return null;
+  let hits = LEN_LIST.filter(c=>{ const ct=c.toks; return [...tk].every(w=>ct.has(w)); });
+  if(hits.length>1){ const main = hits.filter(c=>!LOTHER.test(c.course)); if(main.length) hits = main; }
+  const mins = new Set(hits.map(c=>c.min));
+  return mins.size===1 ? [...mins][0] : null;
 }
 const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', m%60?(m%60)+' min':''].filter(Boolean).join(' ');
 function setLengths(data){
-  (data.courseLengths||[]).forEach(c=>{ if(c.code) LEN_CODE[c.code.toUpperCase()]=c.min; LEN_NAME[lnorm(c.course)]=c.min; });
+  (data.courseLengths||[]).forEach(c=>{ LEN_LIST.push({course:c.course,min:c.min,toks:ltoks(c.course)}); if(c.code) LEN_CODE[c.code.toUpperCase()]=c.min; LEN_NAME[lnorm(c.course)]=c.min; });
   RECS.forEach(r=>{ r.len = courseMin(r.course); });
 }
 

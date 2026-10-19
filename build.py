@@ -307,15 +307,23 @@ def load_lengths():
 LENGTHS = load_lengths()
 _BY_CODE = {c["code"].upper(): c["min"] for c in LENGTHS if c.get("code")}
 _BY_NAME = {_ln(c["course"]): c["min"] for c in LENGTHS}
-HAS_TIME = re.compile(r"\(\s*\d[^)]*\b(min|mins|minutes|hr|hrs|hour|hours)\b[^)]*\)\s*$", re.I)
+HAS_TIME = re.compile(r"\b\d+(\.\d+)?\s*(min|mins|minutes|hr|hrs|hour|hours)\b", re.I)   # the line already gives a time
+_STOP = {"site", "sites", "orientation", "orientatio", "mill", "contractor", "contractors", "training", "specific", "tappisafe",
+         "tappi", "safe", "the", "and", "of", "for", "course", "plant", "facility", "general", "safety", "mills", "s"}
+_OTHER_KIND = re.compile(r"escorted|visitor|security|modified|utilities|psm", re.I)
+
+
+def _tokens(text):
+    return {t for t in _ln(text).split() if t not in _STOP and len(t) > 1}
 
 
 def course_minutes(name):
-    """Minutes for a TAPPISAFE course name (same matching as courseMin() in index.html), or None."""
-    for code in re.findall(r"\(([A-Za-z0-9]{5,})\)", str(name or "")):
+    """Minutes for a TAPPISAFE course (same matching as courseMin() in index.html), or None when unsure."""
+    text = str(name or "")
+    for code in re.findall(r"\b([0-9]{2}[A-Za-z0-9]{3,})\b", text):   # a TAPPISAFE course code anywhere in the line
         if code.upper() in _BY_CODE:
             return _BY_CODE[code.upper()]
-    n = _ln(name)
+    n = _ln(text)
     if not n:
         return None
     for cand in (n, re.sub(r"^tappi ?safe ", "", n)):
@@ -327,7 +335,19 @@ def course_minutes(name):
         if (len(n) >= 15 and cn.startswith(n)) or (len(cn) >= 15 and f" {cn} " in f" {n} "):
             if best is None or len(cn) > best[0]:
                 best = (len(cn), m)
-    return best[1] if best else None
+    if best:
+        return best[1]
+    # "Georgia Pacific Brewton Site Orientation" -> "Georgia-Pacific - Brewton Mill Orientation":
+    # every company/site word in the line is in the course name; only used when the answer is clear.
+    toks = _tokens(text)
+    if len(toks) < 2:
+        return None
+    hits = [c for c in LENGTHS if toks <= _tokens(c["course"])]
+    if len(hits) > 1:
+        main = [c for c in hits if not _OTHER_KIND.search(c["course"])] or hits
+        hits = main
+    mins = {c["min"] for c in hits}
+    return mins.pop() if len(mins) == 1 else None
 
 
 def fmt_minutes(m):
@@ -337,20 +357,23 @@ def fmt_minutes(m):
 
 def list_time_report(rows):
     """Print, per site, the Site specific training text with each course's time added in (), ready to paste into the list."""
-    out, missing = [], set()
+    out, missing, timed = [], set(), set()
     for r in rows:
         lines = [x.strip() for x in re.split(r"\r?\n|;\s*(?=\S)", str(r.get("Site specific training") or "")) if x.strip()]
-        if not lines:
-            continue
         new = []
         for x in lines:
-            m = None if HAS_TIME.search(x) else course_minutes(x)
-            if m is None and not HAS_TIME.search(x):
+            if HAS_TIME.search(x):
+                timed.add(x); new.append(x); continue
+            m = course_minutes(x)
+            if m is None:
                 missing.add(x)
             new.append(f"{x} ({fmt_minutes(m)})" if m is not None else x)
         if new != lines:
-            out.append({"site": r.get("Site", ""), "old": "\n".join(lines), "new": "\n".join(new)})
-    print("::notice title=List times::" + json.dumps({"changes": out, "noMatch": sorted(missing)})[:60000])
+            out.append([r.get("Site", ""), [b for a, b in zip(lines, new) if a != b]])
+    # annotations hold about 4,000 characters each, so the report goes out in parts
+    text = json.dumps({"changes": out, "noMatch": sorted(missing), "alreadyTimed": sorted(timed)})
+    for i in range(0, len(text), 3800):
+        print(f"::notice title=List times {i // 3800 + 1}::" + text[i:i + 3800].replace("%", "%25").replace("\n", "%0A"))
 
 
 def get_site_requirements():
