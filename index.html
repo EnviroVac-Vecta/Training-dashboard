@@ -324,7 +324,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
     <section class="panel">
       <h2>Site Specific</h2>
-      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the TAPPISAFE course list; blank for courses not on it).</p>
+      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the TAPPISAFE course list and the site training times list; blank when not known).</p>
       <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
       <h3>Status colors</h3>
       <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
@@ -355,7 +355,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <p><b>What it holds:</b> one card per customer site from the <i>Vecta and EnviroVac Training Site Specific Requirements</i> list: division, training platform, site specific training and how many, basic training, training location and link, background check, drug screen, fit test, other requirements, specific directions and attached documents.</p>
       <ul class="plain">
         <li>Search any word (for example <i>TWIC</i> or <i>PFT</i>) and filter by <b>Division</b>, <b>Training platform</b> or <b>Background check</b>. <i>Not listed</i> shows sites with no background check entered.</li>
-        <li>Each site specific training that is a TAPPISAFE course shows the time it takes to complete in ( ).</li>
+        <li><b>Site training time</b> is how long the site's training takes (from the training department's site times list), and each site specific training shows its own time in ( ) when known.</li>
         <li><b>Specific directions</b> leave out any sentence about usernames, passwords or logins; ask the training department for those.</li>
         <li><b>Attachments</b> open from the Microsoft List, so you need access to the list to open them.</li>
         <li>Changes made in the list show up here the next morning.</li>
@@ -625,33 +625,12 @@ function renderRefresher(){
 
 // ---------- Site Requirements tab (Microsoft List: Vecta and Envirovac Training Site Specific Requirements) ----------
 // ---------- Course lengths (TAPPISAFE, course_lengths.json) - same matching as course_minutes() in build.py ----------
-let LEN_CODE = {}, LEN_NAME = {};
-const lnorm = t => String(t||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[^a-z0-9]+/g,' ').trim();
-const HAS_TIME = /\b\d+(\.\d+)?\s*(min|mins|minutes|hr|hrs|hour|hours)\b/i;   // the line already gives a time
-const LSTOP = new Set('site sites orientation orientatio mill contractor contractors training specific tappisafe tappi safe the and of for course plant facility general safety mills s'.split(' '));
-const LOTHER = /escorted|visitor|security|modified|utilities|psm/i;
-const ltoks = t => new Set(lnorm(t).split(' ').filter(w=>w.length>1 && !LSTOP.has(w)));
-let LEN_LIST = [];
-function courseMin(name){
-  const text = String(name||'');
-  for(const m of text.matchAll(/\b([0-9]{2}[A-Za-z0-9]{3,})\b/g)){ const c=m[1].toUpperCase(); if(c in LEN_CODE) return LEN_CODE[c]; }
-  const n = lnorm(text); if(!n) return null;
-  for(const c of [n, n.replace(/^tappi ?safe /,'')]) if(c in LEN_NAME) return LEN_NAME[c];
-  let best = null;
-  for(const [cn,m] of Object.entries(LEN_NAME))
-    if((n.length>=15 && cn.startsWith(n)) || (cn.length>=15 && (' '+n+' ').includes(' '+cn+' ')))
-      if(!best || cn.length>best[0]) best=[cn.length,m];
-  if(best) return best[1];
-  // every company/site word in the line is in the course name; only used when the answer is clear
-  const tk = ltoks(text); if(tk.size<2) return null;
-  let hits = LEN_LIST.filter(c=>{ const ct=c.toks; return [...tk].every(w=>ct.has(w)); });
-  if(hits.length>1){ const main = hits.filter(c=>!LOTHER.test(c.course)); if(main.length) hits = main; }
-  const mins = new Set(hits.map(c=>c.min));
-  return mins.size===1 ? [...mins][0] : null;
-}
+// ---------- Course lengths: build.py works out {course name: minutes} (TAPPISAFE course list + site times file) ----------
+let COURSE_LEN = {};
+const courseMin = name => (name in COURSE_LEN) ? COURSE_LEN[name] : null;
 const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', m%60?(m%60)+' min':''].filter(Boolean).join(' ');
 function setLengths(data){
-  (data.courseLengths||[]).forEach(c=>{ LEN_LIST.push({course:c.course,min:c.min,toks:ltoks(c.course)}); if(c.code) LEN_CODE[c.code.toUpperCase()]=c.min; LEN_NAME[lnorm(c.course)]=c.min; });
+  COURSE_LEN = data.courseLen || {};
   RECS.forEach(r=>{ r.len = courseMin(r.course); });
 }
 
@@ -685,8 +664,9 @@ function drawSiteReqs(){
     const o = Object.assign({}, r); delete o['Number of site trainings'];
     if(basic+site) o['Number of trainings'] = (basic+site)+'  ('+(basic?'1 basic + ':'')+site+' site specific)';
     return o; };
-  const order = ['Number of trainings','Basic training','Site specific training','Background check','Drug screen','Fit test','Requirements','Training Location','Training location','Training link','Other site requirements','Specific directions','Attachments'];
-  const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform'].includes(k)));
+  const order = ['Number of trainings','Basic training','Site specific training','Site training time','Background check','Drug screen','Fit test','Requirements','Training Location','Training location','Training link','Other site requirements','Specific directions','Attachments'];
+  let cur = null;
+  const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform','_lineTimes'].includes(k)));
   const val = (k,v) => {
     if(Array.isArray(v)) return v.map(f=>'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a>').join('<br>');
     v = String(v);
@@ -695,14 +675,15 @@ function drawSiteReqs(){
     const li = x => '<li>'+(/^https?:\/\//i.test(x)?'<a href="'+esc(x)+'" target="_blank" rel="noopener">'+esc(x.replace(/^https?:\/\/(www\.)?/i,''))+'</a>':esc(x))+'</li>';
     // site specific trainings are numbered (1., 2., 3.) so the count is easy to see, even when there is only one
     // ...with the time each course takes, when it is a TAPPISAFE course on the course-length list
-    const timed = x => { const m = HAS_TIME.test(x) ? null : courseMin(x); return li(x).replace('</li>', m!=null ? ' <span class="len">('+fmtMin(m)+')</span></li>' : '</li>'); };
+    const lt = (cur && cur._lineTimes) || [];
+    const timed = (x,i) => li(x).replace('</li>', lt[i] ? ' <span class="len">('+esc(lt[i])+')</span></li>' : '</li>');
     if(k==='Site specific training' && lines.length) return '<ol class="lines">'+lines.map(timed).join('')+'</ol>';
     if(lines.length>1) return '<ul class="lines">'+lines.map(li).join('')+'</ul>';
     if(/^https?:\/\//i.test(v)) return '<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v.replace(/^https?:\/\/(www\.)?/i,''))+'</a>';
     return esc(v); };
   $('rq-list').innerHTML = rows.map(r=>'<article class="site"><h3>'+esc(r['Site']||'Unnamed site')+'</h3><div class="chips">'+
       (r['Division']?'<span class="chip">'+esc(r['Division'])+'</span>':'')+(r['Training Platform']?'<span class="chip plat">'+esc(r['Training Platform'])+'</span>':'')+'</div>'+
-      (r=>'<dl>'+fields(r).map(k=>'<dt>'+esc(k)+'</dt><dd'+(k==='Number of trainings'?' class="ntr"':'')+'>'+val(k,r[k])+'</dd>').join('')+'</dl>')(withCount(r))+'</article>').join('')
+      (r=>(cur=r,'<dl>')+fields(r).map(k=>'<dt>'+esc(k)+'</dt><dd'+(k==='Number of trainings'?' class="ntr"':'')+'>'+val(k,r[k])+'</dd>').join('')+'</dl>')(withCount(r))+'</article>').join('')
     || '<div class="empty">No sites match.</div>';
   $('rq-count').textContent = rows.length+' of '+SR.rows.length+' sites';
 }

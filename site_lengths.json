@@ -1,0 +1,237 @@
+[
+{
+"site": "Abbottsfield-AM/NS",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Domtar Bennettsville",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Fiber Industries-Darlington, SC",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Georgia Pacific Brunswick Cellulose",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "Abbottsfield-Georgia Pacific Brewton",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Nutrien Augusta",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Pixelle Chillicothe",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Pixelle Springgrove",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Abbottsfield-Rayonier Fernandina Beach",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "Abbottsfield-Rayonier Jesup",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "Abbottsfield-WestRock Covington",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "Abbottsfield-Westrock Dublin",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "Abednego/Nissan",
+"min": 30,
+"text": "0.5hrs"
+},
+{
+"site": "Domtar-Kingsport",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Georgia Pacific Cedar Springs",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Georgia Pacific Clarendon",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Georgia Pacific Palatka",
+"min": 30,
+"text": "0.5hr"
+},
+{
+"site": "Hunt Refining",
+"min": 30,
+"text": "0.5hrs"
+},
+{
+"site": "ISN-Big River Steel(BRS)",
+"min": 210,
+"text": "3.5hrs"
+},
+{
+"site": "ISN-Georgia Pacific ARC",
+"min": 135,
+"text": "2.25hrs"
+},
+{
+"site": "ISN-Georgia Pacific Leaf River",
+"min": 120,
+"text": "2hrs"
+},
+{
+"site": "ISN-Georgia Pacific Monticello",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "ISN-Georgia Pacific Savannah River Mill(Rincon)",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "ISN-IP EHS Specialist",
+"min": 30,
+"text": "0.5hrs"
+},
+{
+"site": "ISN-Nouryon",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "ISN-Nucor Steel Berkeley",
+"min": 45,
+"text": "0.75hr"
+},
+{
+"site": "ISN-Nucor Steel Decatur",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "ISN-Nucor Steel Jackson",
+"min": 45,
+"text": "0.75hr"
+},
+{
+"site": "ISN-Nucor Steel Tuscaloosa",
+"min": 45,
+"text": "0.75hr"
+},
+{
+"site": "ISN-Nutrien Aurora",
+"min": 120,
+"text": "2hrs"
+},
+{
+"site": "ISN-Nutrien White Springs",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "ISN-PCA Counce, TN",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "ISN-PCA DeRidder Mill",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "ISN-SNF/Chemtall",
+"min": 45,
+"text": "0.75hr"
+},
+{
+"site": "ISN-Steel Dynamics/SDI-Columbus",
+"min": 30,
+"text": "0.5hrs"
+},
+{
+"site": "ISN-Steel Dynamics/ADI-Columbus",
+"min": 60,
+"text": "1 hr"
+},
+{
+"site": "ISN-Steel Dynamics/Biocarbon-Columbus",
+"min": 60,
+"text": "1 hr"
+},
+{
+"site": "ISN-Symrise Brunswick",
+"min": 15,
+"text": "0.25hr"
+},
+{
+"site": "ISN-Tronox",
+"min": 210,
+"text": "3.5hrs"
+},
+{
+"site": "ISN-US Sugar Corportation",
+"min": 90,
+"text": "1.5hrs"
+},
+{
+"site": "ISN-WestRock Demopolis",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "ISN-WestRock Fernandina Beach",
+"min": 30,
+"text": "0.5hr"
+},
+{
+"site": "Kraton",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "MA-SC BSAFE",
+"min": 180,
+"text": "3hrs"
+},
+{
+"site": "New Indy Catawba",
+"min": 75,
+"text": "1.25hrs"
+},
+{
+"site": "PCA Valdosta",
+"min": 60,
+"text": "1hr"
+},
+{
+"site": "Southern Company Redhills",
+"min": null,
+"text": "case by case"
+}
+]

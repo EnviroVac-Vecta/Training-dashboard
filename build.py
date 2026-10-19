@@ -342,12 +342,72 @@ def course_minutes(name):
     toks = _tokens(text)
     if len(toks) < 2:
         return None
-    hits = [c for c in LENGTHS if toks <= _tokens(c["course"])]
+    # mill/site orientations only: a general course ("Hazard Communication") is not the TAPPISAFE 101 version
+    hits = [c for c in LENGTHS if toks <= _tokens(c["course"]) and not c["course"].upper().startswith("TAPPISAFE 101")]
     if len(hits) > 1:
         main = [c for c in hits if not _OTHER_KIND.search(c["course"])] or hits
         hits = main
     mins = {c["min"] for c in hits}
     return mins.pop() if len(mins) == 1 else None
+
+
+# ---------- Site training times (site_lengths.json, from Site_Specific_Training_Duration.xlsx) ----------
+def _load(name):
+    try:
+        with open(os.path.join(HERE, name)) as f:
+            return json.load(f)
+    except Exception as e:
+        print(f"::warning title=Course lengths::{name} not read ({e}).")
+        return []
+
+
+SITE_LENGTHS = _load("site_lengths.json")
+# platform names and filler words that don't tell sites apart
+_SITE_STOP = _STOP | {"abbottsfield", "isn", "inc", "llc", "corp", "corporation", "corportation", "company", "co", "orientation",
+                      "online", "onsite", "on", "ms", "sc", "tn", "ga", "al", "tx", "la", "fl", "nc", "va", "oh", "pa", "mill", "steel", "solutions"}
+
+
+def _stoks(text):
+    return [t for t in re.sub(r"[^a-z0-9]+", " ", str(text or "").lower()).split() if t not in _SITE_STOP and len(t) > 1]
+
+
+def _same_word(a, b):
+    import difflib
+    return a == b or (min(len(a), len(b)) >= 5 and (a.startswith(b) or b.startswith(a))) or \
+        (min(len(a), len(b)) >= 6 and difflib.SequenceMatcher(None, a, b).ratio() >= 0.85)   # "Bennetesville" = "Bennettsville"
+
+
+def site_length(text):
+    """The site_lengths.json entry for a site or course name, when every word of exactly one entry's name is in it."""
+    words = _stoks(text)
+    if not words:
+        return None
+    def missed(e):
+        return sum(1 for w in _stoks(e["site"]) if not any(_same_word(w, x) for x in words))
+    hits = [e for e in SITE_LENGTHS if _stoks(e["site"]) and missed(e) == 0]
+    if len(hits) > 1:   # "Steel Dynamics/SDI-Columbus" vs "Steel Dynamics/ADI-Columbus": the one naming the most words wins
+        top = max(len(_stoks(e["site"])) for e in hits)
+        hits = [e for e in hits if len(_stoks(e["site"])) == top]
+    if not hits:   # one word short ("Steel Dynamics Biocarbon" for "Steel Dynamics/Biocarbon-Columbus"), only when no other site comes close
+        hits = [e for e in SITE_LENGTHS if len(_stoks(e["site"])) >= 3 and missed(e) == 1]
+    return hits[0] if len(hits) == 1 else None
+
+
+def course_length_map(names):
+    """{course name: minutes} for every course on the dashboard that has a known time."""
+    out, by_site = {}, {}
+    for n in sorted(set(x for x in names if x)):
+        m = course_minutes(n)
+        if m is None:
+            e = site_length(n)
+            if e and e["min"] is not None:
+                m = e["min"]
+                by_site.setdefault(e["site"], []).append(n)
+        if m is not None:
+            out[n] = m
+    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time. From the site times file: "
+          + "; ".join(f"{k} -> {', '.join(v)}" for k, v in sorted(by_site.items())))[:3900].replace("%", "%25"))
+    return out
 
 
 def fmt_minutes(m):
@@ -358,20 +418,34 @@ def fmt_minutes(m):
 def list_time_report(rows):
     """Print, per site, the Site specific training text with each course's time added in (), ready to paste into the list."""
     out, missing, timed = [], set(), set()
+    site_hits = {}
     for r in rows:
+        e = site_length(r.get("Site", ""))
+        if e:
+            site_hits.setdefault(e["site"], []).append(r.get("Site", ""))
+            r["Site training time"] = fmt_minutes(e["min"]) if e["min"] is not None else e["text"]
         lines = [x.strip() for x in re.split(r"\r?\n|;\s*(?=\S)", str(r.get("Site specific training") or "")) if x.strip()]
-        new = []
+        e_site = site_length(r.get("Site", ""))
+        new, times = [], []
         for x in lines:
             if HAS_TIME.search(x):
-                timed.add(x); new.append(x); continue
+                timed.add(x); new.append(x); times.append(""); continue
             m = course_minutes(x)
+            if m is None:
+                e = e_site if len(lines) == 1 else None   # one training at the site: the site's time is its time
+                m = e["min"] if e else None
             if m is None:
                 missing.add(x)
             new.append(f"{x} ({fmt_minutes(m)})" if m is not None else x)
+            times.append(fmt_minutes(m) if m is not None else "")
+        if any(times):
+            r["_lineTimes"] = times   # the website shows these in ( ) after each site specific training
         if new != lines:
             out.append([r.get("Site", ""), [b for a, b in zip(lines, new) if a != b]])
     # annotations hold about 4,000 characters each, so the report goes out in parts
-    text = json.dumps({"changes": out, "noMatch": sorted(missing), "alreadyTimed": sorted(timed)})
+    unused = [e["site"] for e in SITE_LENGTHS if e["site"] not in site_hits]
+    text = json.dumps({"siteTimes": site_hits, "siteTimesNotMatched": unused, "allSites": sorted(str(r.get("Site", "")) for r in rows),
+                       "changes": out, "noMatch": sorted(missing), "alreadyTimed": sorted(timed)})
     for i in range(0, len(text), 3800):
         print(f"::notice title=List times {i // 3800 + 1}::" + text[i:i + 3800].replace("%", "%25").replace("\n", "%0A"))
 
@@ -494,6 +568,11 @@ def main():
         data["refresher"] = refresher
     if LENGTHS:
         data["courseLengths"] = LENGTHS
+    ci = cols.index("Course Name") if "Course Name" in cols else None
+    names = [r[ci] for r in rows] if ci is not None else []
+    if tappi:
+        names += [r[3] for r in tappi["rows"]]
+    data["courseLen"] = course_length_map(names)
     site_reqs = get_site_requirements()
     if site_reqs:
         data["siteReqs"] = site_reqs
