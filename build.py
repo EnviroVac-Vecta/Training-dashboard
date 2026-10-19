@@ -326,7 +326,7 @@ def get_site_requirements():
     dropped = 0
     def clean(v):
         if isinstance(v, dict):   # choice / person / lookup columns
-            return v.get("Value") or v.get("DisplayName") or v.get("Title") or ""
+            return v.get("Url") or v.get("Value") or v.get("DisplayName") or v.get("Title") or v.get("Description") or ""
         if isinstance(v, list):
             return ", ".join(filter(None, (clean(x) for x in v)))
         return "" if v is None else v
