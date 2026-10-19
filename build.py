@@ -333,7 +333,8 @@ def get_site_requirements():
             if k not in cols:
                 cols.append(k)
     print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}; "
-          f"{dropped} direction sentences left out for mentioning logins; {sum(len(v) for v in files_by_id.values())} attachments")
+          f"{dropped} direction sentences left out for mentioning logins; {sum(len(v) for v in files_by_id.values())} attachments "
+          f"(flow sends attachments: {'yes, ' + str(len(body.get('attachments') or [])) + ' items checked' if isinstance(body, dict) and 'attachments' in body else 'no'})")
     return {"cols": cols, "rows": rows}
 
 
