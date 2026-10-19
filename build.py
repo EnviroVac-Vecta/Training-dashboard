@@ -318,7 +318,15 @@ def _tokens(text):
 
 
 def course_minutes(name):
-    """Minutes for a TAPPISAFE course (same matching as courseMin() in index.html), or None when unsure."""
+    """Minutes for a TAPPISAFE course, or None when unsure."""
+    m = _course_minutes(name)
+    # International Paper's pulp mills (Columbus, Flint River, Riegelwood...) are now Global Cellulose Fibers on TAPPISAFE
+    if m is None and re.match(r"\s*international paper\b", str(name or ""), re.I):
+        m = _course_minutes(re.sub(r"^\s*international paper\b", "Global Cellulose Fibers", str(name), flags=re.I))
+    return m
+
+
+def _course_minutes(name):
     text = str(name or "")
     for code in re.findall(r"\b([0-9]{2}[A-Za-z0-9]{3,})\b", text):   # a TAPPISAFE course code anywhere in the line
         if code.upper() in _BY_CODE:
@@ -631,17 +639,6 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
-    # one-time list of courses with no time (sent as warnings: notices are already full)
-    from collections import Counter
-    cnt = Counter(n for n in names if n)
-    hsi_names = Counter(r[ci] for r in rows if ci is not None and r[ci])
-    tp = Counter(r[3] for r in tappi["rows"]) if tappi else Counter()
-    ref_names = set(refresher["reqs"]) if refresher else set()
-    blank = [[n, "HSI Training" if n in ref_names and n not in hsi_names else ("TAPPISAFE" if n in tp and n not in hsi_names else "HSI"), cnt[n]]
-             for n in sorted(cnt) if n not in data["courseLen"]]
-    txt = json.dumps(blank)
-    for i in range(0, len(txt), 3800):
-        print(f"::warning title=Blank {i // 3800 + 1}::" + txt[i:i + 3800].replace("%", "%25"))
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
         print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])
