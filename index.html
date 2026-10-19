@@ -163,6 +163,7 @@ td.ready .dot+.dot{margin-left:8px}
 .site dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding-top:1px}
 .site dd{margin:0;overflow-wrap:anywhere}
 .site dd a{color:var(--accent)}
+.site dd ul.lines{margin:0;padding-left:16px;display:flex;flex-direction:column;gap:2px}
 .site mark{background:color-mix(in srgb,var(--s-d60) 35%,transparent);color:inherit;border-radius:2px}
 
 /* how to use */
@@ -645,6 +646,9 @@ function drawSiteReqs(){
   const val = (k,v) => {
     if(Array.isArray(v)) return v.map(f=>'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a>').join('<br>');
     v = String(v);
+    // entries typed on separate lines in the list (e.g. several site trainings) stay one per line
+    const lines = v.split(/\r?\n|;\s*(?=\S)/).map(x=>x.trim()).filter(Boolean);
+    if(lines.length>1) return '<ul class="lines">'+lines.map(x=>'<li>'+(/^https?:\/\//i.test(x)?'<a href="'+esc(x)+'" target="_blank" rel="noopener">'+esc(x.replace(/^https?:\/\/(www\.)?/i,''))+'</a>':esc(x))+'</li>').join('')+'</ul>';
     if(/^https?:\/\//i.test(v)) return '<a href="'+esc(v)+'" target="_blank" rel="noopener">'+esc(v.replace(/^https?:\/\/(www\.)?/i,''))+'</a>';
     return esc(v); };
   $('rq-list').innerHTML = rows.map(r=>'<article class="site"><h3>'+esc(r['Site']||'Unnamed site')+'</h3><div class="chips">'+
