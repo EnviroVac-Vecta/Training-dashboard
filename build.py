@@ -324,6 +324,7 @@ def get_site_requirements():
             {"name": f.get("DisplayName") or f.get("FileName") or "Attachment", "url": f.get("AbsoluteUri") or f.get("Url") or ""}
             for f in files if isinstance(f, dict) and (f.get("AbsoluteUri") or f.get("Url"))]
     dropped = 0
+    hasc_filled = 0
     def clean(v):
         if isinstance(v, dict):   # choice / person / lookup columns
             return v.get("Url") or v.get("Value") or v.get("DisplayName") or v.get("Title") or v.get("Description") or ""
@@ -357,6 +358,10 @@ def get_site_requirements():
         row = {NICE_COL.get(k, k): v for k, v in row.items() if k not in ("Title",)}
         if isinstance(row.get("Number of site trainings"), float) and row["Number of site trainings"].is_integer():
             row["Number of site trainings"] = int(row["Number of site trainings"])
+        # HASC sites (online or in person) all train through hasc.com: fill in the link when the list leaves it blank.
+        if not row.get("Training link") and re.search(r"\bHASC\b", f"{row.get('Training Platform', '')} {row.get('Training Location', '')}", re.I):
+            row["Training link"] = "https://www.hasc.com/"
+            hasc_filled += 1
         if files_by_id.get(item_id):
             row["Attachments"] = files_by_id[item_id]
         if row:
@@ -367,7 +372,7 @@ def get_site_requirements():
             if k not in cols:
                 cols.append(k)
     print(f"::notice title=Site requirements list::{len(rows)} rows; columns: {', '.join(cols)[:1500]}; "
-          f"{dropped} direction sentences left out for mentioning logins; {sum(len(v) for v in files_by_id.values())} attachments "
+          f"{dropped} direction sentences left out for mentioning logins; HASC link filled in for {hasc_filled} sites; {sum(len(v) for v in files_by_id.values())} attachments "
           f"(flow sends attachments: {'yes, ' + str(len(body.get('attachments') or [])) + ' items checked' if isinstance(body, dict) and 'attachments' in body else 'no'})")
     return {"cols": cols, "rows": rows}
 
