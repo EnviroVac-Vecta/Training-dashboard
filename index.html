@@ -70,6 +70,7 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
 
 .tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin;margin-top:-4px}
+.filters{padding:10px 12px;background:var(--surface);border:1px solid var(--line);border-radius:var(--radius)}
 .tabs button{font:inherit;font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:16px;letter-spacing:.01em;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:8px 16px 9px;color:var(--muted);cursor:pointer}
 .tabs button:hover{color:var(--fg)}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
@@ -242,14 +243,6 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
   <div id="loaderr" class="notice" hidden></div>
 
-  <section class="filters" id="filters" aria-label="Filters">
-    <div class="field q ms" data-k="emp"><span class="flabel" id="lbl-emp">Employee</span></div>
-    <div class="field ms" data-k="loc"><span class="flabel" id="lbl-loc">Location</span></div>
-    <div class="field ms" data-k="role"><span class="flabel" id="lbl-role">Role</span></div>
-    <div class="field ms" data-k="course"><span class="flabel" id="lbl-course">Course</span></div>
-    <div class="field"><button class="btn" id="f-clear" type="button">Clear filters</button></div>
-  </section>
-  <div class="chiprow" id="activechips"></div>
 
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
     <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Site Specific</button>
@@ -258,6 +251,14 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
     <button type="button" role="tab" id="t-help" aria-controls="tab-help" aria-selected="false">How to Use</button>
   </nav>
+  <section class="filters" id="filters" aria-label="Filters">
+    <div class="field q ms" data-k="emp"><span class="flabel" id="lbl-emp">Employee</span></div>
+    <div class="field ms" data-k="loc"><span class="flabel" id="lbl-loc">Location</span></div>
+    <div class="field ms" data-k="role"><span class="flabel" id="lbl-role">Role</span></div>
+    <div class="field ms" data-k="course"><span class="flabel" id="lbl-course">Course</span></div>
+    <div class="field"><button class="btn" id="f-clear" type="button">Clear filters</button></div>
+  </section>
+  <div class="chiprow" id="activechips"></div>
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
     <div class="stchips" id="stchips" role="group" aria-label="Filter by status"></div>
@@ -310,7 +311,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <h2>Getting around</h2>
       <p>This dashboard shows EnviroVac training records in one place. It refreshes itself early every morning from HSI, TAPPISAFE and the site requirements list, so what you see is as of this morning. The time of the last refresh is at the top right.</p>
       <ul class="plain">
-        <li><b>Filters at the top</b> (Employee, Location, Role, Course) narrow what you see on Site Specific, HSI Training and Overview. Pick as many as you like in each; click <b>Clear filters</b> to start over. They do not apply to Site Requirements.</li>
+        <li><b>Filters under the tabs</b> (Employee, Location, Role, Course) narrow what you see on Site Specific, HSI Training and Overview. <b>Course</b> only shows on Site Specific and Overview; HSI Training has its own requirement picker. Pick as many as you like in each; click <b>Clear filters</b> to start over. Filters are hidden on Site Requirements and How to Use, where they don't apply.</li>
         <li><b>Click any name</b> to open a panel on the right with everything that person has on file: site readiness, HSI training and all completed courses.</li>
         <li><b>Click a column heading</b> to sort by it; click again to reverse.</li>
         <li><b>Export CSV</b> downloads exactly what the table is showing, filters included, to open in Excel.</li>
@@ -818,7 +819,7 @@ function renderLocs(base){
 
 function chips(){
   const c = [];
-  MS.forEach(k=>F[k].forEach(v=>c.push([k+':'+v, (k==='emp'?'':MSDEF[k].label+': ')+nameOf(k,v)])));
+  MS.forEach(k=>{ if(k==='course' && F.tab==='hsi') return; F[k].forEach(v=>c.push([k+':'+v, (k==='emp'?'':MSDEF[k].label+': ')+nameOf(k,v)])); });
   F.st.forEach(k=>c.push(['st:'+k,short[k]]));
   $('activechips').innerHTML = c.map(([k,l])=>'<span class="active-chip">'+esc(l)+'<button type="button" data-rm="'+esc(k)+'" aria-label="Remove filter '+esc(l)+'">×</button></span>').join('');
 }
@@ -929,7 +930,9 @@ function setTab(t){
   if(t==='hsi' && F.view!=='ref'){ F.view='ref'; reset(); }
   else if(t==='results' && F.view==='ref'){ F.view='rec'; reset(); }
   // the Employee / Location / Role / Course filters don't apply to the site list
-  $('filters').hidden = $('activechips').hidden = (t==='reqs' || t==='help'); save(); }
+  $('filters').hidden = $('activechips').hidden = (t==='reqs' || t==='help');
+  // Course belongs to Site Specific and Overview; HSI Training has its own requirement picker.
+  document.querySelector('.ms[data-k="course"]').hidden = t==='hsi'; chips(); save(); }
 $('t-results').addEventListener('click',()=>setTab('results'));
 $('t-hsi').addEventListener('click',()=>setTab('hsi'));
 $('t-help').addEventListener('click',()=>setTab('help'));
