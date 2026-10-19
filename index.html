@@ -238,9 +238,10 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
   <div class="chiprow" id="activechips"></div>
 
   <nav class="tabs" role="tablist" aria-label="Dashboard sections">
-    <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Results</button>
-    <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
+    <button type="button" role="tab" id="t-results" aria-controls="tab-results" aria-selected="true">Site Specific</button>
+    <button type="button" role="tab" id="t-hsi" aria-controls="tab-results" aria-selected="false" hidden>HSI Training</button>
     <button type="button" role="tab" id="t-reqs" aria-controls="tab-reqs" aria-selected="false" hidden>Site Requirements</button>
+    <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
   </nav>
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
@@ -253,8 +254,8 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     <div class="stchips" id="refchips" role="group" aria-label="Filter refresher status" hidden></div>
     <div class="tablebar">
       <div class="chiprow">
-        <div class="seg" role="group" aria-label="View">
-          <button type="button" id="v-rec" aria-pressed="true">Site Specific Training</button>
+        <div class="seg" id="viewseg" role="group" aria-label="View">
+          <button type="button" id="v-rec" aria-pressed="true">Training records</button>
           <button type="button" id="v-ref" aria-pressed="false" hidden>Refresher Training</button>
           <button type="button" id="v-emp" aria-pressed="false">By employee</button>
         </div>
@@ -489,7 +490,7 @@ function addRefresher(rf){
     if(r.kind==='due' && r.win && r.due && r.win > r.due){ r.kind = 'Current'; r.notAssigned = true; }
     return r;
   });
-  $('v-ref').hidden = false;
+  $('t-hsi').hidden = false;
 
 }
 function refRows(useStatus){
@@ -820,6 +821,7 @@ function render(){
   $('v-emp').setAttribute('aria-pressed', F.view==='emp');
   $('v-ref').setAttribute('aria-pressed', F.view==='ref');
   const isRef = F.view==='ref' && REF.rows.length;
+  $('viewseg').hidden = !!isRef;
   $('stchips').hidden = !!isRef; $('refchips').hidden = !isRef; $('old-wrap').hidden = !!isRef; $('ref-req-wrap').hidden = !isRef;
   if(isRef){ $('sitebar').hidden = true; renderRefresher(); save(); return; }
   if(F.view==='ref') F.view='rec';
@@ -832,10 +834,18 @@ const reset = () => { shown = PAGE; render(); };
 // events
 $('f-old').addEventListener('change',e=>{F.old=e.target.checked; reset();});
 $('f-clear').addEventListener('click',()=>{ MS.forEach(k=>F[k]=[]); F.st=[]; closePop(); reset(); });
-function setTab(t){ F.tab=t; ['results','overview','reqs'].forEach(x=>{ $('tab-'+x).hidden = x!==t; $('t-'+x).setAttribute('aria-selected', x===t); });
+// "Site Specific" and "HSI Training" share the results table: HSI Training is the refresher view.
+function setTab(t){
+  if(t==='hsi' && !REF.rows.length) t='results';
+  F.tab=t; const panel = t==='hsi' ? 'results' : t;
+  ['results','overview','reqs'].forEach(x=>{ $('tab-'+x).hidden = x!==panel; });
+  ['results','hsi','overview','reqs'].forEach(x=>$('t-'+x).setAttribute('aria-selected', x===t));
+  if(t==='hsi' && F.view!=='ref'){ F.view='ref'; reset(); }
+  else if(t==='results' && F.view==='ref'){ F.view='rec'; reset(); }
   // the Employee / Location / Role / Course filters don't apply to the site list
   $('filters').hidden = $('activechips').hidden = t==='reqs'; save(); }
 $('t-results').addEventListener('click',()=>setTab('results'));
+$('t-hsi').addEventListener('click',()=>setTab('hsi'));
 $('t-overview').addEventListener('click',()=>setTab('overview'));
 $('stchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
 $('t-reqs').addEventListener('click',()=>setTab('reqs'));
@@ -910,6 +920,7 @@ function start(data){
   $('gate').hidden = true; $('app').hidden = false;
   build(data); setupMS(); render();
   if(data.siteReqs && data.siteReqs.rows && data.siteReqs.rows.length){ initSiteReqs(data.siteReqs); $('t-reqs').hidden = false; if(SAVED_TAB==='reqs') setTab('reqs'); }
+  if(SAVED_TAB==='hsi') setTab('hsi');
   const g = new Date(data.generated);
   const ageH = (Date.now()-g.getTime())/3600000;
   $('fresh').innerHTML = '<span>Data refreshed <b>'+g.toLocaleString('en-US',{month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit'})+'</b></span>'+
