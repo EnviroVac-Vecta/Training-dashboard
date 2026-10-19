@@ -362,6 +362,25 @@ def _load(name):
 
 
 SITE_LENGTHS = _load("site_lengths.json")
+# HSI course hours (hsi_hours.json, from the Hours Reference Sheet tab of the Weekly Course Completions reference guide).
+# 0 hours (policies, acknowledgements) shows no time.
+HSI_HOURS = _load("hsi_hours.json")
+
+
+def _hk(text):
+    t = str(text or "").lower()
+    t = re.sub(r"[-\s]*(english|spanish)?\s*curriculum\s*$|[-\s]+english\s*$", "", t)   # "Fire Hydrant Training-English Curriculum"
+    return re.sub(r"[^a-z0-9]+", "", t)
+
+
+_BY_HSI = {}
+for _c in HSI_HOURS:
+    _BY_HSI.setdefault(_hk(_c["course"]), _c["min"])
+
+
+def hsi_minutes(name):
+    m = _BY_HSI.get(_hk(name))
+    return m if m else None
 # platform names and filler words that don't tell sites apart
 _SITE_STOP = _STOP | {"abbottsfield", "isn", "inc", "llc", "corp", "corporation", "corportation", "company", "co", "orientation",
                       "online", "onsite", "on", "ms", "sc", "tn", "ga", "al", "tx", "la", "fl", "nc", "va", "oh", "pa", "mill", "steel", "solutions"}
@@ -404,8 +423,13 @@ def site_length(text):
 def course_length_map(names):
     """{course name: minutes} for every course on the dashboard that has a known time."""
     out, by_site = {}, {}
+    hsi_n = 0
     for n in sorted(set(x for x in names if x)):
-        m = course_minutes(n)
+        m = hsi_minutes(n)
+        if m is not None:
+            hsi_n += 1
+        else:
+            m = course_minutes(n)
         if m is None:
             e = site_length(n)
             if e and e["min"] is not None:
@@ -413,7 +437,7 @@ def course_length_map(names):
                 by_site.setdefault(e["site"], []).append(n)
         if m is not None:
             out[n] = m
-    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time. From the site times file: "
+    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time ({hsi_n} from the HSI hours sheet). From the site times file: "
           + "; ".join(f"{k} -> {', '.join(v)}" for k, v in sorted(by_site.items())))[:3900].replace("%", "%25"))
     return out
 
@@ -586,7 +610,12 @@ def main():
     names = [r[ci] for r in rows] if ci is not None else []
     if tappi:
         names += [r[3] for r in tappi["rows"]]
+    if refresher:
+        names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
+    if refresher:
+        no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
+        print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])
     site_reqs = get_site_requirements()
     if site_reqs:
         data["siteReqs"] = site_reqs

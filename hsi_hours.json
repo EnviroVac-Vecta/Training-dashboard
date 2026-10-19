@@ -1,0 +1,354 @@
+[
+{
+"course": "360 Walk Around",
+"min": 15
+},
+{
+"course": "Aerial Lift Safety",
+"min": 15
+},
+{
+"course": "Air Monitoring-English",
+"min": 15
+},
+{
+"course": "Annual Fire Extinguisher Inspection",
+"min": 30
+},
+{
+"course": "Asbestos Hazard Awareness",
+"min": 15
+},
+{
+"course": "Back Injury Prevention: Injuries and Their Causes (Microlearning)",
+"min": 15
+},
+{
+"course": "Back Injury Prevention: Lifting and Carrying (Microlearning)",
+"min": 15
+},
+{
+"course": "Basic First Aid",
+"min": 45
+},
+{
+"course": "Basic First Aid for Oil & Gas Personnel",
+"min": 30
+},
+{
+"course": "Behavior Based Safety",
+"min": 15
+},
+{
+"course": "Benzene Awareness",
+"min": 15
+},
+{
+"course": "Bloodborne Pathogens",
+"min": 30
+},
+{
+"course": "Carcinogen Awareness",
+"min": 15
+},
+{
+"course": "Chemical Safety",
+"min": 30
+},
+{
+"course": "Company Safety Knife Policy",
+"min": 0
+},
+{
+"course": "Confined Space and Engulfment Awareness for Oil & Gas Operations",
+"min": 30
+},
+{
+"course": "Confined Space Awareness",
+"min": 30
+},
+{
+"course": "Confined Space Entry Supervisor",
+"min": 30
+},
+{
+"course": "Confined Space Oil and Gas: Duties and Responsibilities (Microlearning)",
+"min": 15
+},
+{
+"course": "Confined Space Program",
+"min": 0
+},
+{
+"course": "Contractor Orientation for Oil & Gas",
+"min": 30
+},
+{
+"course": "Contractors in Oil & Gas: Environmental and Emergency Response",
+"min": 15
+},
+{
+"course": "Contractors in Oil & Gas: General Hazards",
+"min": 15
+},
+{
+"course": "Contractors in Oil & Gas: Hazard Controls",
+"min": 15
+},
+{
+"course": "Contractors in Oil & Gas: Specific Hazards",
+"min": 15
+},
+{
+"course": "Coronavirus Awareness",
+"min": 15
+},
+{
+"course": "COVID-19 SOP Acknowledement",
+"min": 0
+},
+{
+"course": "Disciplinary Action Program",
+"min": 0
+},
+{
+"course": "Discrimination in the Workplace",
+"min": 30
+},
+{
+"course": "Distracted Driving Prevention",
+"min": 15
+},
+{
+"course": "Driver Safety",
+"min": 30
+},
+{
+"course": "Drug and Alcohol Policy",
+"min": 0
+},
+{
+"course": "Emergency Action Plans for Office Employees",
+"min": 30
+},
+{
+"course": "Energy Drink Policy",
+"min": 0
+},
+{
+"course": "EnviroVac Human Resources - Interview Training",
+"min": 0
+},
+{
+"course": "Fall Protection",
+"min": 15
+},
+{
+"course": "Fall Protection Program",
+"min": 0
+},
+{
+"course": "Fire Hydrant Training-English Curriculum",
+"min": 30
+},
+{
+"course": "Fire Protection for Oil & Gas Employees",
+"min": 15
+},
+{
+"course": "Fire Safety",
+"min": 30
+},
+{
+"course": "Globally Harmonized System (GHS)",
+"min": 15
+},
+{
+"course": "Grounding and Combustible Dust-English Curriculum",
+"min": 30
+},
+{
+"course": "H2S Safety for Oil and Gas",
+"min": 30
+},
+{
+"course": "Hazard Communication",
+"min": 30
+},
+{
+"course": "Hazard Communication for the Oil & Gas Industry",
+"min": 30
+},
+{
+"course": "Hearing Conservation",
+"min": 30
+},
+{
+"course": "Heat Stress in the Workplace",
+"min": 30
+},
+{
+"course": "Hydro Blasting Procedure",
+"min": 0
+},
+{
+"course": "Hydroblasting and Industrial Vacuuming Safety Devices-English Curriculum",
+"min": 30
+},
+{
+"course": "Incident Investigation and Injury Reporting E and S v2",
+"min": 0
+},
+{
+"course": "Incident Investigation Procedures E and S 7.22.2025",
+"min": 0
+},
+{
+"course": "Industrial Vacuuming Operation Procedures",
+"min": 0
+},
+{
+"course": "Lead Awareness",
+"min": 15
+},
+{
+"course": "Lime Awareness-English Curriculum",
+"min": 15
+},
+{
+"course": "Lockout/Tagout",
+"min": 15
+},
+{
+"course": "Lockout/Tagout Procedures",
+"min": 0
+},
+{
+"course": "Lockout/Tagout Simulation",
+"min": 15
+},
+{
+"course": "Mobile Elevating Work Platforms: Aerial and Scissor Lift Safety",
+"min": 45
+},
+{
+"course": "Office Ergonomics",
+"min": 30
+},
+{
+"course": "Office Safety",
+"min": 15
+},
+{
+"course": "OSHA 10hr General Industry",
+"min": 600
+},
+{
+"course": "OSHA 30hr General Industry",
+"min": 1800
+},
+{
+"course": "Personal Protective Equipment",
+"min": 15
+},
+{
+"course": "Personal Protective Equipment Policy",
+"min": 0
+},
+{
+"course": "Portable Fire Extinguishers",
+"min": 15
+},
+{
+"course": "Process Safety Management",
+"min": 30
+},
+{
+"course": "Respiratory Protection",
+"min": 30
+},
+{
+"course": "Safety and Health Awareness for Oil Spill Cleanup Workers",
+"min": 60
+},
+{
+"course": "Scaffold Safety",
+"min": 15
+},
+{
+"course": "Silica Awareness for Oil and Gas",
+"min": 30
+},
+{
+"course": "Slips/Trips/Falls",
+"min": 15
+},
+{
+"course": "SPCC for Oil & Gas: Controls and Countermeasures",
+"min": 15
+},
+{
+"course": "Spill Prevention/Control/Countermeasures for Oil & Gas Operations",
+"min": 30
+},
+{
+"course": "Spill Response for Oil & Gas Personnel",
+"min": 15
+},
+{
+"course": "Stop Work Authority Curriculum",
+"min": 15
+},
+{
+"course": "Vehicle Incidents Policy",
+"min": 0
+},
+{
+"course": "Vehicle Spotter Training and Declaration-English Curriculum",
+"min": 15
+},
+{
+"course": "Working Around Hazardous Chemicals",
+"min": 0
+},
+{
+"course": "Skid Steer Training",
+"min": 45
+},
+{
+"course": "Skid Steer Knowledge Assessment",
+"min": 0
+},
+{
+"course": "Scissor Lift Safety",
+"min": 15
+},
+{
+"course": "Forklift Operator Training - Cal/OSHA",
+"min": 30
+},
+{
+"course": "Mobile Elevating Work Platform Safety",
+"min": 30
+},
+{
+"course": "Fire Hydrant Training-Spanish Curriculum",
+"min": 30
+},
+{
+"course": "Hydroblasting and Industrial Vacuuming Safety Devices-Spanish Curriculum",
+"min": 30
+},
+{
+"course": "Vehicle Spotter Training and Declaration-Spanish Curriculum",
+"min": 15
+},
+{
+"course": "Lime Awareness-Spanish Curriculum",
+"min": 15
+},
+{
+"course": "Air Monitoring-Spanish",
+"min": 15
+}
+]
