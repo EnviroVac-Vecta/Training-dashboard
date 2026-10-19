@@ -164,6 +164,7 @@ td.ready .dot+.dot{margin-left:8px}
 .site dt{color:var(--muted);font-size:11.5px;text-transform:uppercase;letter-spacing:.04em;padding-top:1px}
 .site dd{margin:0;overflow-wrap:anywhere}
 .site dd a{color:var(--accent)}
+.site dd.ntr{font-weight:700;white-space:pre}
 .site dd ul.lines,.site dd ol.lines{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:2px}
 .site dd ol.lines li::marker{font-weight:600;color:var(--muted)}
 .site mark{background:color-mix(in srgb,var(--s-d60) 35%,transparent);color:inherit;border-radius:2px}
@@ -643,7 +644,15 @@ function drawSiteReqs(){
     const hay = Object.entries(r).map(([k,v])=>Array.isArray(v)? v.map(f=>f.name).join(' ') : v).join(' ').toLowerCase();
     return q.every(t=>hay.includes(t));
   }).sort((a,b)=>String(a['Site']||'').localeCompare(String(b['Site']||'')));
-  const order = ['Site specific training','Number of site trainings','Basic training','Training location','Training link','Background check','Drug screen','Fit test','Requirements','Other site requirements','Specific directions','Attachments'];
+  // Number of trainings = 1 for the basic training (when one is required) + each site specific training listed.
+  const splitLines = v => String(v||'').split(/\r?\n|;\s*(?=\S)/).map(x=>x.trim()).filter(Boolean);
+  const NO_BASIC = /^(n\/?a|none|no|not required|-)$/i;
+  const withCount = r => {
+    const basic = splitLines(r['Basic training']).filter(x=>!NO_BASIC.test(x)).length ? 1 : 0, site = splitLines(r['Site specific training']).length;
+    const o = Object.assign({}, r); delete o['Number of site trainings'];
+    if(basic+site) o['Number of trainings'] = (basic+site)+'  ('+(basic?'1 basic + ':'')+site+' site specific)';
+    return o; };
+  const order = ['Number of trainings','Basic training','Site specific training','Background check','Drug screen','Fit test','Requirements','Training Location','Training location','Training link','Other site requirements','Specific directions','Attachments'];
   const fields = r => order.filter(k=>r[k]!=null && r[k]!=='').concat(Object.keys(r).filter(k=>!order.includes(k) && !['Site','Division','Training Platform'].includes(k)));
   const val = (k,v) => {
     if(Array.isArray(v)) return v.map(f=>'<a href="'+esc(f.url)+'" target="_blank" rel="noopener">'+esc(f.name)+'</a>').join('<br>');
@@ -658,7 +667,7 @@ function drawSiteReqs(){
     return esc(v); };
   $('rq-list').innerHTML = rows.map(r=>'<article class="site"><h3>'+esc(r['Site']||'Unnamed site')+'</h3><div class="chips">'+
       (r['Division']?'<span class="chip">'+esc(r['Division'])+'</span>':'')+(r['Training Platform']?'<span class="chip plat">'+esc(r['Training Platform'])+'</span>':'')+'</div>'+
-      '<dl>'+fields(r).map(k=>'<dt>'+esc(k)+'</dt><dd>'+val(k,r[k])+'</dd>').join('')+'</dl></article>').join('')
+      (r=>'<dl>'+fields(r).map(k=>'<dt>'+esc(k)+'</dt><dd'+(k==='Number of trainings'?' class="ntr"':'')+'>'+val(k,r[k])+'</dd>').join('')+'</dl>')(withCount(r))+'</article>').join('')
     || '<div class="empty">No sites match.</div>';
   $('rq-count').textContent = rows.length+' of '+SR.rows.length+' sites';
 }
