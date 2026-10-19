@@ -352,5 +352,11 @@
 "min": 30,
 "siteTotal": false,
 "site": "Georgia Pacific Palatka"
+},
+{
+"course": "Jesup Plant Site-specific Safety and Environmental Orientation Program",
+"min": 90,
+"siteTotal": false,
+"site": "Abbottsfield-Rayonier Jesup"
 }
 ]
