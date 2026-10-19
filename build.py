@@ -368,7 +368,8 @@ _SITE_STOP = _STOP | {"abbottsfield", "isn", "inc", "llc", "corp", "corporation"
 
 
 def _stoks(text):
-    return [t for t in re.sub(r"[^a-z0-9]+", " ", str(text or "").lower()).split() if t not in _SITE_STOP and len(t) > 1]
+    text = re.sub(r"west\s*rock", "westrock", str(text or "").lower())
+    return [t for t in re.sub(r"[^a-z0-9]+", " ", text).split() if t not in _SITE_STOP and len(t) > 1]
 
 
 def _same_word(a, b):
@@ -382,6 +383,13 @@ def site_length(text):
     words = _stoks(text)
     if not words:
         return None
+    # names the training department told us are the same site (site_lengths.json "aliases")
+    low = re.sub(r"[^a-z0-9]+", " ", str(text).lower()).strip()
+    for e in SITE_LENGTHS:
+        for a in e.get("aliases", []):
+            a = re.sub(r"[^a-z0-9]+", " ", a.lower()).strip()
+            if a and (low == a or f" {a} " in f" {low} "):
+                return e
     def missed(e):
         return sum(1 for w in _stoks(e["site"]) if not any(_same_word(w, x) for x in words))
     hits = [e for e in SITE_LENGTHS if _stoks(e["site"]) and missed(e) == 0]
@@ -432,7 +440,13 @@ def list_time_report(rows):
                 timed.add(x); new.append(x); times.append(""); continue
             m = course_minutes(x)
             if m is None:
-                e = e_site if len(lines) == 1 else None   # one training at the site: the site's time is its time
+                e = site_length(x)
+                if e is e_site and len(lines) > 1:
+                    e = None   # the site's total time isn't each training's time
+                elif e is None and len(lines) == 1:
+                    e = e_site   # one training at the site: the site's time is its time
+                if e and e["min"] is None:
+                    e = None
                 m = e["min"] if e else None
             if m is None:
                 missing.add(x)

@@ -52,7 +52,10 @@
 {
 "site": "Abbottsfield-WestRock Covington",
 "min": 90,
-"text": "1.5hrs"
+"text": "1.5hrs",
+"aliases": [
+"Smurfit West Rock Covington"
+]
 },
 {
 "site": "Abbottsfield-Westrock Dublin",
@@ -87,7 +90,10 @@
 {
 "site": "Hunt Refining",
 "min": 30,
-"text": "0.5hrs"
+"text": "0.5hrs",
+"aliases": [
+"Hunt Oil"
+]
 },
 {
 "site": "ISN-Big River Steel(BRS)",
@@ -112,7 +118,10 @@
 {
 "site": "ISN-Georgia Pacific Savannah River Mill(Rincon)",
 "min": 60,
-"text": "1hr"
+"text": "1hr",
+"aliases": [
+"Georgia Pacific Rincon"
+]
 },
 {
 "site": "ISN-IP EHS Specialist",
@@ -182,7 +191,10 @@
 {
 "site": "ISN-Steel Dynamics/Biocarbon-Columbus",
 "min": 60,
-"text": "1 hr"
+"text": "1 hr",
+"aliases": [
+"SDI Biocarbon Solutions"
+]
 },
 {
 "site": "ISN-Symrise Brunswick",
@@ -207,7 +219,10 @@
 {
 "site": "ISN-WestRock Fernandina Beach",
 "min": 30,
-"text": "0.5hr"
+"text": "0.5hr",
+"aliases": [
+"West Rock Fernandina"
+]
 },
 {
 "site": "Kraton",
@@ -217,7 +232,11 @@
 {
 "site": "MA-SC BSAFE",
 "min": 180,
-"text": "3hrs"
+"text": "3hrs",
+"aliases": [
+"MASC-WEB BSAFE",
+"MASC BSAFE"
+]
 },
 {
 "site": "New Indy Catawba",
@@ -232,6 +251,9 @@
 {
 "site": "Southern Company Redhills",
 "min": null,
-"text": "case by case"
+"text": "case by case",
+"aliases": [
+"Red Hills"
+]
 }
 ]
