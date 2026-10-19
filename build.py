@@ -254,7 +254,8 @@ def read_refresher(xlsx_bytes):
 
 # SharePoint fields that come with every list item but aren't part of the list itself.
 SP_SKIP = re.compile(r"^(@odata|odata|{|ItemInternalId|ID$|Id$|Modified|Created|Author|Editor|_|OData__|ComplianceAsset|GUID|Attachments|ContentType|"
-                     r"Identifier|IsFolder|Thumbnail|LinkTitle|FilenameWithExtension|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount)", re.I)
+                     r"Identifier|IsFolder|Thumbnail|LinkTitle|FilenameWithExtension|DocIcon|AppAuthor|AppEditor|ItemChildCount|FolderChildCount|"
+                     r"FileSystemObjectType|ServerRedirected|EditorId|AuthorId|AttachmentFiles)", re.I)
 
 
 # Friendlier names for the list's shortened column names.
@@ -300,6 +301,8 @@ def get_site_requirements():
         try:
             res = requests.post(url, json={}, timeout=240)
             b = res.json()
+            if isinstance(b, dict) and isinstance(b.get("d"), dict):   # SharePoint REST verbose format
+                b = {"value": b["d"].get("results") or []}
             its = b if isinstance(b, list) else (b.get("value") or b.get("body", {}).get("value") or [])
             if res.status_code == 200 and its:
                 body = b
@@ -331,6 +334,14 @@ def get_site_requirements():
     for it in items:
         row = {}
         item_id = str(it.get("ID") or it.get("Id") or "")
+        # "Send an HTTP request to SharePoint" with $expand=AttachmentFiles puts the files on the item itself.
+        af = it.get("AttachmentFiles")
+        if isinstance(af, dict):
+            af = af.get("results") or []
+        if isinstance(af, list) and af:
+            files_by_id[item_id] = [{"name": f.get("FileName") or "Attachment",
+                                     "url": "https://envirovac-my.sharepoint.com" + requests.utils.quote(f["ServerRelativeUrl"]) if str(f.get("ServerRelativeUrl", "")).startswith("/") else f.get("ServerRelativeUrl", "")}
+                                    for f in af if isinstance(f, dict) and f.get("ServerRelativeUrl")]
         for k, v in it.items():
             if SP_SKIP.search(k) or k.endswith("#Id") or k.endswith("@odata.type") or "#" in k:
                 continue
