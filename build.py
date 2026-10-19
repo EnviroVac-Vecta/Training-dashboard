@@ -401,6 +401,11 @@ for _a, _b in HSI_ALIASES.items():
         _BY_HSI.setdefault(_hk(_a), _BY_HSI[_hk(_b)])
 
 
+# ISNetworld course names (from the ISNet Raw Data export) tied to the site times list.
+# siteTotal: the site has several courses and the time is for all of them together.
+ISN_TIMES = {_hk(e["course"]): e for e in _load("isn_course_times.json")}
+
+
 def hsi_minutes(name):
     m = _BY_HSI.get(_hk(name))
     return m if m else None
@@ -443,11 +448,21 @@ def site_length(text):
     return hits[0] if len(hits) == 1 else None
 
 
+SITE_TOTAL = set()
+
+
 def course_length_map(names):
     """{course name: minutes} for every course on the dashboard that has a known time."""
     out, by_site = {}, {}
-    hsi_n = 0
+    hsi_n = isn_n = 0
     for n in sorted(set(x for x in names if x)):
+        e = ISN_TIMES.get(_hk(n))
+        if e and e["min"] is not None:
+            out[n] = e["min"]
+            isn_n += 1
+            if e["siteTotal"]:
+                SITE_TOTAL.add(n)
+            continue
         m = hsi_minutes(n)
         if m is not None:
             hsi_n += 1
@@ -460,7 +475,7 @@ def course_length_map(names):
                 by_site.setdefault(e["site"], []).append(n)
         if m is not None:
             out[n] = m
-    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time ({hsi_n} from the HSI hours sheet). From the site times file: "
+    print("::notice title=Course length matches::" + (f"{len(out)} course names have a time ({hsi_n} from the HSI hours sheet, {isn_n} ISNetworld courses, {len(SITE_TOTAL)} of them a site total). From the site times file: "
           + "; ".join(f"{k} -> {', '.join(v)}" for k, v in sorted(by_site.items())))[:3900].replace("%", "%25"))
     return out
 
@@ -639,6 +654,7 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
+    data["courseLenTotal"] = sorted(SITE_TOTAL)
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
         print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])

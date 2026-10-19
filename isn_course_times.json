@@ -1,0 +1,356 @@
+[
+{
+"course": "BRS & EV Contractor Safety Orientation",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Annual EMS Training - Spanish",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Contractor Stormwater Construction Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Resource Conservation and Recovery Act (RCRA) Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Resource Conservation and Recovery Act (RCRA) Training - Spanish",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS ResponsibleSteel Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Spill Prevention, Control, and Countermeasure (SPCC) Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Spill Prevention, Control, and Countermeasure (SPCC) Training -  Spanish",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Stormwater Pollution Prevention Plan (SWPPP) Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS Stormwater Pollution Prevention Plan Training - Spanish",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "BRS – Annual EMS Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "Big River Steel Safety Management System Awareness Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "ESP - Big River Steel Contractor Safety Orientation",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "EV CSWPPP - Training - 2024",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Big River Steel(BRS)"
+},
+{
+"course": "ARC Chemical Process Safety Contractor Orientation",
+"min": 135,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific ARC"
+},
+{
+"course": "ARC Cyber Security Acknowledgement",
+"min": 135,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific ARC"
+},
+{
+"course": "ARC Good Manufacturing Practices",
+"min": 135,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific ARC"
+},
+{
+"course": "Alabama River Cellulose Safety Orientation",
+"min": 135,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific ARC"
+},
+{
+"course": "Leaf River Chemical Process Safety (CPS) Orientation Part 2",
+"min": 120,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific Leaf River"
+},
+{
+"course": "Leaf River Orientation & CPS Training",
+"min": 120,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific Leaf River"
+},
+{
+"course": "Monticello Contractor Safety Orientation",
+"min": 90,
+"siteTotal": false,
+"site": "ISN-Georgia Pacific Monticello"
+},
+{
+"course": "Georgia-Pacific - Chemical Process Training (No Audio)",
+"min": 60,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific Savannah River Mill(Rincon)"
+},
+{
+"course": "Georgia-Pacific - Fall Protection Guidance (No Audio)",
+"min": 60,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific Savannah River Mill(Rincon)"
+},
+{
+"course": "Savannah River Mill Orientation",
+"min": 60,
+"siteTotal": true,
+"site": "ISN-Georgia Pacific Savannah River Mill(Rincon)"
+},
+{
+"course": "Contractor HSE Specialist Qualification",
+"min": 30,
+"siteTotal": false,
+"site": "ISN-IP EHS Specialist"
+},
+{
+"course": "GCF EHS Specialist Training",
+"min": 30,
+"siteTotal": false,
+"site": "ISN-IP EHS Specialist"
+},
+{
+"course": "Nucor Berkeley Online Training",
+"min": 45,
+"siteTotal": false,
+"site": "ISN-Nucor Steel Berkeley"
+},
+{
+"course": "2026 Nucor Steel Decatur Contractor Orientation",
+"min": 60,
+"siteTotal": false,
+"site": "ISN-Nucor Steel Decatur"
+},
+{
+"course": "Nutrien - Aurora Contractor Site Specific Training",
+"min": 120,
+"siteTotal": false,
+"site": "ISN-Nutrien Aurora"
+},
+{
+"course": "Nutrien – Spanish Aurora Contractor Specific Training",
+"min": 120,
+"siteTotal": false,
+"site": "ISN-Nutrien Aurora"
+},
+{
+"course": "Nutrien - White Springs - Contractor Safety Training",
+"min": 90,
+"siteTotal": false,
+"site": "ISN-Nutrien White Springs"
+},
+{
+"course": "DeRidder Mill Contractor Safety Orientation",
+"min": 60,
+"siteTotal": true,
+"site": "ISN-PCA DeRidder Mill"
+},
+{
+"course": "DeRidder, LA Mill - PSM Qualified Contractor Training",
+"min": 60,
+"siteTotal": true,
+"site": "ISN-PCA DeRidder Mill"
+},
+{
+"course": "Valdosta, GA Mill - PSM Qualified Contractor Training",
+"min": 60,
+"siteTotal": true,
+"site": "PCA Valdosta"
+},
+{
+"course": "Valdosta, GA Mill Contractor Safety Orientation",
+"min": 60,
+"siteTotal": true,
+"site": "PCA Valdosta"
+},
+{
+"course": "Contractor EHS & Process Safety Orientation",
+"min": 45,
+"siteTotal": false,
+"site": "ISN-SNF/Chemtall"
+},
+{
+"course": "Steel Dynamics - Columbus, MS - Contractor Safety Orientation",
+"min": 30,
+"siteTotal": false,
+"site": "ISN-Steel Dynamics/SDI-Columbus"
+},
+{
+"course": "2026 - Aluminum Dynamics Contractor Safety Training",
+"min": 60,
+"siteTotal": false,
+"site": "ISN-Steel Dynamics/ADI-Columbus"
+},
+{
+"course": "2026 - Aluminum Dynamics Contractor Safety Training - Spanish",
+"min": 60,
+"siteTotal": false,
+"site": "ISN-Steel Dynamics/ADI-Columbus"
+},
+{
+"course": "SDI - BioCarbon Solutions Contractor Orientation",
+"min": 60,
+"siteTotal": false,
+"site": "ISN-Steel Dynamics/Biocarbon-Columbus"
+},
+{
+"course": "Tronox - Code of Ethics and Business Conduct Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Electronic Devices Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Hamilton - Landfill Specific Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Hamilton Contractor Orientation English Part 1",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Hamilton Drug and Alcohol",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Hamilton Facility Process Chemicals",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Non-Disclosure Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox - Radiation Worker Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox Hamilton Plant Alarms Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox Hamilton Plant Orientation Training English Part 2",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Tronox- Hamilton - Homeland Security Training",
+"min": 210,
+"siteTotal": true,
+"site": "ISN-Tronox"
+},
+{
+"course": "Safe Operations Around Sugar Dust Part 1",
+"min": 90,
+"siteTotal": true,
+"site": "ISN-US Sugar Corportation"
+},
+{
+"course": "Safe Operations Around Sugar Dust Part 2",
+"min": 90,
+"siteTotal": true,
+"site": "ISN-US Sugar Corportation"
+},
+{
+"course": "Savannah, GA Contractor Orientation Training",
+"min": 90,
+"siteTotal": true,
+"site": "ISN-US Sugar Corportation"
+},
+{
+"course": "US Sugar Savannah, GA – GMP Contractor Orientation​",
+"min": 90,
+"siteTotal": true,
+"site": "ISN-US Sugar Corportation"
+},
+{
+"course": "WestRock Fernandina Beach Safety Orientation",
+"min": 30,
+"siteTotal": false,
+"site": "ISN-WestRock Fernandina Beach"
+},
+{
+"course": "Savannah, GA Online Training",
+"min": 60,
+"siteTotal": false,
+"site": "Kraton"
+},
+{
+"course": "Nissan Contractors Site Orientation",
+"min": 30,
+"siteTotal": false,
+"site": "Abednego/Nissan"
+},
+{
+"course": "Georgia-Pacific Palatka, FL TTN Contractor Safety Orientation",
+"min": 30,
+"siteTotal": false,
+"site": "Georgia Pacific Palatka"
+}
+]
