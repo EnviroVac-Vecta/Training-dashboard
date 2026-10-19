@@ -327,6 +327,9 @@ def get_site_requirements():
             row["Attachments"] = files_by_id[item_id]
         if row:
             rows.append(row)
+    for r in rows:   # TEMP: see how multi-training sites are written
+        if str(r.get("Number of site trainings", "1")) not in ("1", "0", ""):
+            print("::notice title=Multi " + str(r.get("Site", ""))[:40].replace(":", " ") + "::" + json.dumps(r.get("Site specific training", ""), ensure_ascii=False)[:900].replace("%", "%25"))
     cols = []
     for r in rows:
         for k in r:
