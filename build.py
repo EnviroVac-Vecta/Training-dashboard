@@ -462,6 +462,10 @@ def fmt_minutes(m):
     return " ".join(x for x in (f"{h} hr" if h else "", f"{mm} min" if mm else "") if x)
 
 
+# a line that is an instruction, not a training name ("See Reference guide in the attachments")
+NOTE_LINE = re.compile(r"\b(see|has to|have to|must|call|schedule[ds]?|email|attachment|bring)\b|.{90,}", re.I)
+
+
 def list_time_report(rows):
     """Print, per site, the Site specific training text with each course's time added in (), ready to paste into the list."""
     out, missing, timed = [], set(), set()
@@ -482,7 +486,7 @@ def list_time_report(rows):
                 e = site_length(x)
                 if e is e_site and len(lines) > 1:
                     e = None   # the site's total time isn't each training's time
-                elif e is None and len(lines) == 1:
+                elif e is None and len(lines) == 1 and not NOTE_LINE.search(x):
                     e = e_site   # one training at the site: the site's time is its time
                 if e and e["min"] is None:
                     e = None
