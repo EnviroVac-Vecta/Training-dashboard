@@ -69,7 +69,7 @@ input[type=search]:focus-visible,select:focus-visible,button:focus-visible,.tile
 .active-chip button:hover{color:var(--fg)}
 .toggle{display:inline-flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);cursor:pointer}
 
-.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);margin-top:-4px}
+.tabs{display:flex;gap:4px;border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:thin;margin-top:-4px}
 .tabs button{font:inherit;font-family:var(--f-display);font-stretch:85%;font-weight:700;font-size:16px;letter-spacing:.01em;background:none;border:0;border-bottom:3px solid transparent;margin-bottom:-1px;padding:8px 16px 9px;color:var(--muted);cursor:pointer}
 .tabs button:hover{color:var(--fg)}
 .tabs button[aria-selected="true"]{color:var(--fg);border-bottom-color:var(--accent)}
@@ -165,6 +165,19 @@ td.ready .dot+.dot{margin-left:8px}
 .site dd a{color:var(--accent)}
 .site mark{background:color-mix(in srgb,var(--s-d60) 35%,transparent);color:inherit;border-radius:2px}
 
+/* how to use */
+.help{max-width:900px}
+.help .panel{display:flex;flex-direction:column;gap:8px}
+.help h2{margin-bottom:2px}
+.help h3{font-size:13px;margin:6px 0 0;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.help p{margin:0;max-width:75ch}
+.help ul{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;max-width:80ch}
+.help ul.plain li{padding-left:14px;position:relative}
+.help ul.plain li::before{content:"";position:absolute;left:2px;top:.6em;width:5px;height:5px;border-radius:50%;background:var(--muted)}
+.help .legendlist li{display:grid;grid-template-columns:18px minmax(0,1fr);gap:8px;align-items:start}
+.help .legendlist .dot{margin-top:4px}
+.help .medical{display:inline}
+
 /* table */
 .tablebar{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
 .seg{display:inline-flex;border:1px solid var(--line);border-radius:var(--radius);overflow:hidden}
@@ -242,6 +255,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     <button type="button" role="tab" id="t-hsi" aria-controls="tab-results" aria-selected="false" hidden>HSI Training</button>
     <button type="button" role="tab" id="t-reqs" aria-controls="tab-reqs" aria-selected="false" hidden>Site Requirements</button>
     <button type="button" role="tab" id="t-overview" aria-controls="tab-overview" aria-selected="false">Overview</button>
+    <button type="button" role="tab" id="t-help" aria-controls="tab-help" aria-selected="false">How to Use</button>
   </nav>
 
   <div id="tab-results" role="tabpanel" aria-labelledby="t-results" class="tabpanel">
@@ -290,10 +304,78 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
     <div class="reqgrid" id="rq-list"></div>
   </div>
 
+  <div id="tab-help" role="tabpanel" aria-labelledby="t-help" class="tabpanel help" hidden>
+    <section class="panel">
+      <h2>Getting around</h2>
+      <p>This dashboard shows EnviroVac training records in one place. It refreshes itself early every morning from HSI, TAPPISAFE and the site requirements list, so what you see is as of this morning. The time of the last refresh is at the top right.</p>
+      <ul class="plain">
+        <li><b>Filters at the top</b> (Employee, Location, Role, Course) narrow what you see on Site Specific, HSI Training and Overview. Pick as many as you like in each; click <b>Clear filters</b> to start over. They do not apply to Site Requirements.</li>
+        <li><b>Click any name</b> to open a panel on the right with everything that person has on file: site readiness, HSI training and all completed courses.</li>
+        <li><b>Click a column heading</b> to sort by it; click again to reverse.</li>
+        <li><b>Export CSV</b> downloads exactly what the table is showing, filters included, to open in Excel.</li>
+        <li>Your filters and tab are remembered on your own device only. Nobody else sees them change.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Site Specific</h2>
+      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date and days left.</p>
+      <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
+      <h3>Status colors</h3>
+      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
+      <p>Rows that are expired or expiring are shaded in their color so they stand out. Click a status button above the table to show only that status; click more than one to combine.</p>
+      <h3>Tags and notes</h3>
+      <ul class="plain">
+        <li><span class="tag">retake</span> the newest completion of a course that was taken more than once. Older attempts are hidden unless you tick <b>Show older records replaced by a retake</b>; they then show as <span class="tag">replaced</span>.</li>
+        <li><span class="medical">Medical - Not a Course</span> fit tests, blood panels, medical exams, PFT, audiograms and Rapid MEQ. These are medical requirements, not classes.</li>
+        <li><span class="medical lvl">For Level Up Program</span> cohort requirements ending in (4m), (8m) or (1yr), and the Tech II to Tech III Skill Assessment.</li>
+      </ul>
+      <h3>Plant-site readiness (green / yellow / red lights)</h3>
+      <p>Pick a mill's course in the <b>Course</b> filter (for example a Mansfield orientation). A <b>Site</b> column appears with one light per person:</p>
+      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Ready</b>: has TAPPISAFE Basic or Basic Refresher, the mill orientation and, if the mill has one, the PSM orientation, all passed and not expired.</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>Ready, expires within 30 days</b>: everything is in place but something runs out within 30 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Not ready</b>: something is missing, expired or failed.</span></li></ul>
+      <p>The bar above the table counts Ready / Expiring / Not ready; click one to show only those people. Click a name to see exactly what they are missing for that site.</p>
+    </section>
+
+    <section class="panel">
+      <h2>HSI Training</h2>
+      <p><b>What it holds:</b> the HSI <i>Training Requirement Status</i> report: every required (recurring) training for every active member, with last completed date, when the training window opens, the due date and days until due.</p>
+      <p><b>Compliance group:</b> pick one group at a time, because each follows its own rules: <b>Refresher Training</b> (annual safety refreshers and the rest), <b>Level Up Trainings</b> (the (4m), (8m) and (1yr) cohort items and the Tech II to Tech III Skill Assessment) or <b>Medical Trainings</b> (fit tests, blood panels, exams, PFT, audiogram, Rapid MEQ). The drop-down next to it narrows to one requirement.</p>
+      <h3>Status colors</h3>
+      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Delinquent</b>: past due in HSI.</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>In Training Window</b>: the window to retake it is open and it is due soon.</span></li><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: up to date.</span></li><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current - next not assigned</b>: up to date; the next round has not been assigned yet (its window opens after the due date shown).</span></li></ul>
+      <p>The <b>Delinquent or in training window</b> button shows everything that needs attention in the chosen group; <b>Current</b> shows the rest.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Site Requirements</h2>
+      <p><b>What it holds:</b> one card per customer site from the <i>Vecta and EnviroVac Training Site Specific Requirements</i> list: division, training platform, site specific training and how many, basic training, training location and link, background check, drug screen, fit test, other requirements, specific directions and attached documents.</p>
+      <ul class="plain">
+        <li>Search any word (for example <i>TWIC</i> or <i>PFT</i>) and filter by <b>Division</b>, <b>Training platform</b> or <b>Background check</b>. <i>Not listed</i> shows sites with no background check entered.</li>
+        <li><b>Specific directions</b> leave out any sentence about usernames, passwords or logins; ask the training department for those.</li>
+        <li><b>Attachments</b> open from the Microsoft List, so you need access to the list to open them.</li>
+        <li>Changes made in the list show up here the next morning.</li>
+      </ul>
+    </section>
+
+    <section class="panel">
+      <h2>Overview</h2>
+      <p><b>What it holds:</b> a summary of the Site Specific records. The tiles count records in each status (same colors as above); click a tile to filter by it. <b>Status by location</b> shows a bar per location split into the status colors; click a location to filter to it.</p>
+    </section>
+
+    <section class="panel">
+      <h2>Where the data comes from</h2>
+      <ul class="plain">
+        <li><b>HSI Training Summary</b> and <b>HSI Training Requirement Status</b>: pulled from HSI each morning.</li>
+        <li><b>TAPPISAFE</b> student attendance: pulled each morning.</li>
+        <li><b>Site requirements</b>: the Microsoft List kept by the training department.</li>
+      </ul>
+      <p>Something look wrong or missing? Contact the EnviroVac training department (envirovactraining@envirovac.us).</p>
+    </section>
+  </div>
+
   <div class="card-bg" id="cardbg" hidden><aside class="card" id="card" role="dialog" aria-modal="true" aria-labelledby="card-name"></aside></div>
 
   <footer>
-    Statuses are worked out from the expiration date in the HSI export (and, for plant-site courses, the TAPPISAFE export). When an employee has retaken a course, the newest completion counts and older records for that course are hidden unless you turn them on in Results. Your filters are your own; nobody else sees them change.
+    Statuses are worked out from the expiration date in the HSI export (and, for plant-site courses, the TAPPISAFE export). When an employee has retaken a course, the newest completion counts and older records for that course are hidden unless you turn them on in Site Specific. Your filters are your own; nobody else sees them change.
   </footer>
 </div>
 
@@ -838,19 +920,20 @@ $('f-clear').addEventListener('click',()=>{ MS.forEach(k=>F[k]=[]); F.st=[]; clo
 function setTab(t){
   if(t==='hsi' && !REF.rows.length) t='results';
   F.tab=t; const panel = t==='hsi' ? 'results' : t;
-  ['results','overview','reqs'].forEach(x=>{ $('tab-'+x).hidden = x!==panel; });
-  ['results','hsi','overview','reqs'].forEach(x=>$('t-'+x).setAttribute('aria-selected', x===t));
+  ['results','overview','reqs','help'].forEach(x=>{ $('tab-'+x).hidden = x!==panel; });
+  ['results','hsi','overview','reqs','help'].forEach(x=>$('t-'+x).setAttribute('aria-selected', x===t));
   if(t==='hsi' && F.view!=='ref'){ F.view='ref'; reset(); }
   else if(t==='results' && F.view==='ref'){ F.view='rec'; reset(); }
   // the Employee / Location / Role / Course filters don't apply to the site list
-  $('filters').hidden = $('activechips').hidden = t==='reqs'; save(); }
+  $('filters').hidden = $('activechips').hidden = (t==='reqs' || t==='help'); save(); }
 $('t-results').addEventListener('click',()=>setTab('results'));
 $('t-hsi').addEventListener('click',()=>setTab('hsi'));
+$('t-help').addEventListener('click',()=>setTab('help'));
 $('t-overview').addEventListener('click',()=>setTab('overview'));
 $('stchips').addEventListener('click',e=>{ const b=e.target.closest('.stchip'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
 $('t-reqs').addEventListener('click',()=>setTab('reqs'));
 const SAVED_TAB = F.tab;
-setTab(F.tab==='overview'?'overview':'results');
+setTab(F.tab==='overview'||F.tab==='help' ? F.tab : 'results');
 $('tiles').addEventListener('click',e=>{ const b=e.target.closest('.tile'); if(!b) return; const k=b.dataset.k; F.st = F.st.includes(k)?F.st.filter(x=>x!==k):[...F.st,k]; reset(); });
 $('locs').addEventListener('click',e=>{ const b=e.target.closest('.locrow'); if(!b) return; const l=b.dataset.loc; F.loc = F.loc.includes(l)?F.loc.filter(x=>x!==l):[...F.loc,l]; reset(); });
 $('activechips').addEventListener('click',e=>{ const b=e.target.closest('[data-rm]'); if(!b) return; const k=b.dataset.rm, i=k.indexOf(':'), f=k.slice(0,i), v=k.slice(i+1);
