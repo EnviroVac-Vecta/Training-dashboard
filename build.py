@@ -631,6 +631,17 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
+    # one-time list of courses with no time (sent as warnings: notices are already full)
+    from collections import Counter
+    cnt = Counter(n for n in names if n)
+    hsi_names = Counter(r[ci] for r in rows if ci is not None and r[ci])
+    tp = Counter(r[3] for r in tappi["rows"]) if tappi else Counter()
+    ref_names = set(refresher["reqs"]) if refresher else set()
+    blank = [[n, "HSI Training" if n in ref_names and n not in hsi_names else ("TAPPISAFE" if n in tp and n not in hsi_names else "HSI"), cnt[n]]
+             for n in sorted(cnt) if n not in data["courseLen"]]
+    txt = json.dumps(blank)
+    for i in range(0, len(txt), 3800):
+        print(f"::warning title=Blank {i // 3800 + 1}::" + txt[i:i + 3800].replace("%", "%25"))
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
         print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])
