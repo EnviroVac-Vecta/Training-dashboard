@@ -325,7 +325,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date and days left.</p>
       <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
       <h3>Status colors</h3>
-      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
+      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
       <p>Rows that are expired or expiring are shaded in their color so they stand out. Click a status button above the table to show only that status; click more than one to combine.</p>
       <h3>Tags and notes</h3>
       <ul class="plain">
@@ -386,13 +386,13 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 <script>
 (function(){
 const ST = [
-  {k:'expired', label:'Expired', c:'--s-expired'},
+  {k:'current', label:'Current', c:'--s-current'},
   {k:'d30', label:'Expires in 30 days', c:'--s-d30'},
   {k:'d60', label:'Expires in 31–60 days', c:'--s-d60'},
   {k:'d90', label:'Expires in 61–90 days', c:'--s-d90'},
-  {k:'current', label:'Current', c:'--s-current'},
-  {k:'notdone', label:'Assigned, not completed', c:'--s-notdone'},
+  {k:'expired', label:'Expired', c:'--s-expired'},
   {k:'failed', label:'Failed', c:'--s-failed'},
+  {k:'notdone', label:'Assigned, not completed', c:'--s-notdone'},
   {k:'none', label:'No training on file', c:'--s-none'},
 ];
 const STMAP = Object.fromEntries(ST.map(s=>[s.k,s]));
@@ -879,7 +879,7 @@ function renderRecords(base, mills){
   $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
 }
 
-const empCols = [['name','Employee'],['loc','Location'],['role','Role'],['expired','Expired'],['d30','≤30 days'],['d60','31–60'],['d90','61–90'],['notdone','Not done'],['failed','Failed'],['current','Current'],['total','Total']];
+const empCols = [['name','Employee'],['loc','Location'],['role','Role'],['current','Current'],['d30','≤30 days'],['d60','31–60'],['d90','61–90'],['expired','Expired'],['failed','Failed'],['notdone','Not done'],['total','Total']];
 function renderEmployees(base, mills){
   let rows = F.st.length ? base.filter(r=>F.st.includes(r.st)) : base;
   if(mills.length && LIGHTF.length) rows = rows.filter(r=>LIGHTF.includes(worst(r.empKey,mills)));
@@ -897,7 +897,7 @@ function renderEmployees(base, mills){
   const cell = (e,k) => '<td class="cnt'+(e[k]?'':' z')+'">'+(e[k]?'<b style="--c:var('+STMAP[k].c+')">'+e[k]+'</b>':'0')+'</td>';
   $('tbl').querySelector('tbody').innerHTML = emps.slice(0,shown).map(e=>
     '<tr>'+(mills.length?'<td class="ready">'+dots(e.key,mills)+'</td>':'')+'<td><button type="button" class="who" data-emp="'+esc(e.key)+'" title="See this employee\'s training">'+esc(e.name)+'</button><span class="sub">'+esc(e.id||'No ID')+'</span></td><td>'+esc(e.loc)+'</td><td>'+esc(e.role)+'</td>'+
-    ['expired','d30','d60','d90','notdone','failed','current'].map(k=>cell(e,k)).join('')+
+    ['current','d30','d60','d90','expired','failed','notdone'].map(k=>cell(e,k)).join('')+
     '<td class="cnt">'+(e.total||'<span class="sub" style="display:inline">none</span>')+'</td></tr>').join('')
     || '<tr><td colspan="11"><div class="empty">No employees match these filters.</div></td></tr>';
   $('count').textContent = emps.length.toLocaleString()+' employee'+(emps.length===1?'':'s');
@@ -976,8 +976,8 @@ $('tbl').addEventListener('click',e=>{
       lines = [['Employee ID','Name','Location','Requirement','Last Completed','Window Opens','Due Date','Days to Due','Status']]
         .concat(current.map(r=>[r.id,r.name,r.loc,r.req,isoD(r.last),isoD(r.win),isoD(r.due),r.days,r.notAssigned?'Current - next not assigned':r.status]));
     } else if(F.view==='emp'){
-      lines = [['Employee ID','Name','Location','Role','Expired','Expires 30 days','Expires 31-60','Expires 61-90','Not completed','Failed','Current','Total']]
-        .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.expired,e.d30,e.d60,e.d90,e.notdone,e.failed,e.current,e.total]));
+      lines = [['Employee ID','Name','Location','Role','Current','Expires 30 days','Expires 31-60','Expires 61-90','Expired','Failed','Not completed','Total']]
+        .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.current,e.d30,e.d60,e.d90,e.expired,e.failed,e.notdone,e.total]));
     } else {
       lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Replaced by retake']]
         .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],r.old?'Yes':'']));
