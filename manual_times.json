@@ -1,0 +1,236 @@
+{
+ "24 Hour HAZWOPER  Accordance with 29 C.F.R. 1910.120": {
+  "text": "Title Only"
+ },
+ "8 hour HAZWORPER Refresher - Envirovac": {
+  "text": "Title Only"
+ },
+ "Bypassing NHT-Basic Training Courses, Policy, Procedures, & Declarations": {
+  "text": "Title Only"
+ },
+ "English-New Hire Training with Hands-On": {
+  "text": "Title Only"
+ },
+ "Envirovac Classroom Rules and Expectations": {
+  "text": "Title Only"
+ },
+ "HAZWOPER Decontamination Hands On": {
+  "text": "Title Only"
+ },
+ "Hydro Blasting Procedures": {
+  "text": "Document"
+ },
+ "Incident Investigation and Injury Reporting-INVESTIGACIÓN DE INCIDENTES Y REPORTE DE LESIONES": {
+  "text": "Document"
+ },
+ "New Hire Training Completely Online": {
+  "text": "Title Only"
+ },
+ "OSHA 10 Authorized General Industry": {
+  "text": "Title Only"
+ },
+ "Silica Awareness": {
+  "min": 30
+ },
+ "Tech I to Tech II Skill Assessment": {
+  "text": "Title Only"
+ },
+ "Virtual NH Driver Courses": {
+  "text": "Title Only"
+ },
+ "Virtual NHT": {
+  "text": "Title Only"
+ },
+ "Tech II to Tech III Post Test Assessment (1yr)": {
+  "min": 30
+ },
+ "Tech II to Tech III Post Test Assessment (4m)": {
+  "min": 30
+ },
+ "Tech II to Tech III Post Test Assessment (8m)": {
+  "min": 30
+ },
+ "Company Safety Knife Policy": {
+  "text": "Document"
+ },
+ "Confined Space Program": {
+  "text": "Document"
+ },
+ "Disciplinary Action Program": {
+  "text": "Document"
+ },
+ "Drug and Alcohol Policy": {
+  "text": "Document"
+ },
+ "Energy Drink Policy": {
+  "text": "Document"
+ },
+ "Fall Protection Program": {
+  "text": "Document"
+ },
+ "Industrial Vacuuming Operation Procedures": {
+  "text": "Document"
+ },
+ "Personal Protective Equipment Policy": {
+  "text": "Document"
+ },
+ "Vehicle Incidents Policy": {
+  "text": "Document"
+ },
+ "Working Around Hazardous Chemicals": {
+  "min": 15
+ },
+ "Audiogram": {
+  "text": "Medical"
+ },
+ "CBC Blood Panel with Differentials": {
+  "text": "Medical"
+ },
+ "Full-Face Air Purifying Respirator Fit Test": {
+  "text": "Medical"
+ },
+ "Full-Face Supplied Air Respirator Fit Test": {
+  "text": "Medical"
+ },
+ "Half-Face Air Purifying Respirator Fit Test": {
+  "text": "Medical"
+ },
+ "Heavy Metal Blood Panel": {
+  "text": "Medical"
+ },
+ "Medical Exam(Physical)": {
+  "text": "Medical"
+ },
+ "Pulmonary Function Test(PFT)": {
+  "text": "Medical"
+ },
+ "Rapid MEQ Medical Respirator Clearance Questionnaire": {
+  "text": "Medical"
+ },
+ "BRS & EV Contractor Safety Orientation": {
+  "min": 30
+ },
+ "BRS Annual EMS Training - Spanish": {
+  "min": 20
+ },
+ "BRS Contractor Stormwater Construction Training": {
+  "min": 60
+ },
+ "BRS Resource Conservation and Recovery Act (RCRA) Training": {
+  "min": 30
+ },
+ "BRS Resource Conservation and Recovery Act (RCRA) Training - Spanish": {
+  "min": 30
+ },
+ "BRS ResponsibleSteel Training": {
+  "min": 4
+ },
+ "BRS Spill Prevention, Control, and Countermeasure (SPCC) Training": {
+  "min": 30
+ },
+ "BRS Spill Prevention, Control, and Countermeasure (SPCC) Training -  Spanish": {
+  "min": 30
+ },
+ "BRS Stormwater Pollution Prevention Plan (SWPPP) Training": {
+  "min": 20
+ },
+ "BRS Stormwater Pollution Prevention Plan Training - Spanish": {
+  "min": 20
+ },
+ "BRS – Annual EMS Training": {
+  "min": 20
+ },
+ "Big River Steel Safety Management System Awareness Training": {
+  "min": 15
+ },
+ "ESP - Big River Steel Contractor Safety Orientation": {
+  "min": 30
+ },
+ "EV CSWPPP - Training - 2024": {
+  "min": 10
+ },
+ "ARC Chemical Process Safety Contractor Orientation": {
+  "min": 45
+ },
+ "ARC Cyber Security Acknowledgement": {
+  "min": 5
+ },
+ "ARC Good Manufacturing Practices": {
+  "min": 30
+ },
+ "Alabama River Cellulose Safety Orientation": {
+  "min": 60
+ },
+ "Leaf River Chemical Process Safety (CPS) Orientation Part 2": {
+  "min": 45
+ },
+ "Leaf River Orientation & CPS Training": {
+  "min": 30
+ },
+ "Georgia-Pacific - Chemical Process Training (No Audio)": {
+  "min": 30
+ },
+ "Georgia-Pacific - Fall Protection Guidance (No Audio)": {
+  "min": 30
+ },
+ "Savannah River Mill Orientation": {
+  "min": 15
+ },
+ "DeRidder Mill Contractor Safety Orientation": {
+  "min": 45
+ },
+ "DeRidder, LA Mill - PSM Qualified Contractor Training": {
+  "min": 20
+ },
+ "Tronox - Code of Ethics and Business Conduct Training": {
+  "min": 15
+ },
+ "Tronox - Electronic Devices Training": {
+  "min": 30
+ },
+ "Tronox - Hamilton - Landfill Specific Training": {
+  "min": 10
+ },
+ "Tronox - Hamilton Contractor Orientation English Part 1": {
+  "min": 30
+ },
+ "Tronox - Hamilton Drug and Alcohol": {
+  "min": 30
+ },
+ "Tronox - Hamilton Facility Process Chemicals": {
+  "min": 20
+ },
+ "Tronox - Non-Disclosure Training": {
+  "min": 5
+ },
+ "Tronox - Radiation Worker Training": {
+  "min": 15
+ },
+ "Tronox Hamilton Plant Alarms Training": {
+  "min": 15
+ },
+ "Tronox Hamilton Plant Orientation Training English Part 2": {
+  "min": 60
+ },
+ "Tronox- Hamilton - Homeland Security Training": {
+  "min": 10
+ },
+ "Safe Operations Around Sugar Dust Part 1": {
+  "min": 55
+ },
+ "Safe Operations Around Sugar Dust Part 2": {
+  "min": 55
+ },
+ "Savannah, GA Contractor Orientation Training": {
+  "min": 40
+ },
+ "US Sugar Savannah, GA – GMP Contractor Orientation": {
+  "min": 10
+ },
+ "Valdosta, GA Mill - PSM Qualified Contractor Training": {
+  "min": 25
+ },
+ "Valdosta, GA Mill Contractor Safety Orientation": {
+  "min": 60
+ }
+}

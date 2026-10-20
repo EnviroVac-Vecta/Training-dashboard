@@ -448,6 +448,15 @@ def site_length(text):
     return hits[0] if len(hits) == 1 else None
 
 
+# Times and wording the training department filled in (Courses_Without_Times.xlsx, Per_Course_Times_Needed.xlsx).
+# Minutes, or a word that explains a zero time ("Title Only", "Document", "Medical"). These win over everything else.
+_MANUAL = {}
+try:
+    with open(os.path.join(HERE, "manual_times.json")) as _f:
+        _MANUAL = {_hk(k): v for k, v in json.load(_f).items()}
+except Exception as _e:
+    print(f"::warning title=Course lengths::manual_times.json not read ({_e}).")
+LEN_TEXT = {}
 SITE_TOTAL = set()
 MULTI_COURSE_SITES = {e["site"] for e in ISN_TIMES.values() if e.get("siteTotal")}
 
@@ -457,6 +466,13 @@ def course_length_map(names):
     out, by_site = {}, {}
     hsi_n = isn_n = 0
     for n in sorted(set(x for x in names if x)):
+        man = _MANUAL.get(_hk(n))
+        if man:
+            if "min" in man:
+                out[n] = man["min"]
+            else:
+                LEN_TEXT[n] = man["text"]
+            continue
         e = ISN_TIMES.get(_hk(n))
         if e and e["siteTotal"]:
             # several courses at this site and the time is for all of them: no time per course (pay is per course taken)
@@ -671,8 +687,9 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
+    data["courseLenText"] = LEN_TEXT
     if refresher:
-        no = [q for q in refresher["reqs"] if q not in data["courseLen"]]
+        no = [q for q in refresher["reqs"] if q not in data["courseLen"] and q not in LEN_TEXT]
         print("::notice title=HSI Training without a time::" + "; ".join(no)[:3800])
     site_reqs = get_site_requirements()
     if site_reqs:

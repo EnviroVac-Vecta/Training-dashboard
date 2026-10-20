@@ -324,7 +324,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
 
     <section class="panel">
       <h2>Site Specific</h2>
-      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the HSI hours reference sheet, the TAPPISAFE course list and the site training times list; ISNetworld site courses use the ISNetworld site times when the site has only that one course; a course at a site with several courses stays blank until its own time is known, since pay is figured per course taken; blank also for 0-hour policies).</p>
+      <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the HSI hours reference sheet, the TAPPISAFE course list and the site training times list; ISNetworld site courses use the ISNetworld site times when the site has only that one course; a course at a site with several courses stays blank until its own time is known, since pay is figured per course taken. Courses with no time to pay show why instead: <i>Title Only</i>, <i>Document</i> or <i>Medical</i>).</p>
       <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
       <h3>Status colors</h3>
       <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
@@ -616,7 +616,7 @@ function renderRefresher(){
     const days = r.days==null ? '' : (r.days<0 ? '−'+Math.abs(r.days) : r.days);
     return '<tr'+(tint?' class="tint" style="--c:var('+c+');--t:'+tint+'%"':'')+'><td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||'No ID')+'</span></td>'+
       '<td>'+esc(r.loc)+'</td><td class="course">'+esc(r.req)+noteTag(r.req)+'</td><td class="date">'+fmtD(r.last)+'</td><td class="date">'+fmtD(r.win)+'</td><td class="date">'+fmtD(r.due)+'</td><td class="num">'+days+'</td>'+
-      '<td><span class="pill" style="--c:var('+c+')">'+esc(r.notAssigned?'Current - next not assigned':(r.status||'—'))+'</span></td><td class="num">'+fmtMin(r.len)+'</td></tr>';
+      '<td><span class="pill" style="--c:var('+c+')">'+esc(r.notAssigned?'Current - next not assigned':(r.status||'—'))+'</span></td><td class="num">'+(r.len!=null?fmtMin(r.len):'<span class="sub">'+esc(r.lenText)+'</span>')+'</td></tr>';
   }).join('') || '<tr><td colspan="9"><div class="empty">No refresher requirements match these filters.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' requirement'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
   $('more').hidden = rows.length<=shown;
@@ -626,16 +626,16 @@ function renderRefresher(){
 // ---------- Site Requirements tab (Microsoft List: Vecta and Envirovac Training Site Specific Requirements) ----------
 // ---------- Course lengths (TAPPISAFE, course_lengths.json) - same matching as course_minutes() in build.py ----------
 // ---------- Course lengths: build.py works out {course name: minutes} (TAPPISAFE course list + site times file) ----------
-let COURSE_LEN = {}, COURSE_LEN_N = {};
+let COURSE_LEN = {}, COURSE_LEN_N = {}, LEN_TEXT = {};
 // plant-site records carry a tidied name ("... Orientation" without the "(12TIPROM)" code), so also look up by a loose key
 const lkey = t => String(t||'').toLowerCase().replace(/\([^)]*\)/g,' ').replace(/[–—]/g,'-').replace(/[^a-z0-9]+/g,'');
 const courseMin = name => (name in COURSE_LEN) ? COURSE_LEN[name] : (lkey(name) in COURSE_LEN_N ? COURSE_LEN_N[lkey(name)] : null);
 const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', m%60?(m%60)+' min':''].filter(Boolean).join(' ');
 function setLengths(data){
-  COURSE_LEN = data.courseLen || {};
+  COURSE_LEN = data.courseLen || {}; LEN_TEXT = data.courseLenText || {};
   Object.entries(COURSE_LEN).forEach(([k,m])=>{ const n=lkey(k); if(n && !(n in COURSE_LEN_N)) COURSE_LEN_N[n]=m; });
-  RECS.forEach(r=>{ r.len = courseMin(r.course); });
-  REF.rows.forEach(r=>{ r.len = courseMin(r.req); });
+  RECS.forEach(r=>{ r.len = courseMin(r.course); r.lenText = LEN_TEXT[r.course]||''; });
+  REF.rows.forEach(r=>{ r.len = courseMin(r.req); r.lenText = LEN_TEXT[r.req]||''; });
 }
 
 let SR = null;
@@ -901,7 +901,7 @@ function renderRecords(base, mills){
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td>'+
-      '<td class="num" title="Time the course takes to complete">'+fmtMin(r.len)+'</td></tr>';
+      '<td class="num" title="Time the course takes to complete">'+(r.len!=null?fmtMin(r.len):'<span class="sub">'+esc(r.lenText)+'</span>')+'</td></tr>';
   }).join('');
   $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(9+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
@@ -1004,13 +1004,13 @@ $('tbl').addEventListener('click',e=>{
     let lines;
     if(F.view==='ref'){
       lines = [['Employee ID','Name','Location','Requirement','Last Completed','Window Opens','Due Date','Days to Due','Status','Course Length']]
-        .concat(current.map(r=>[r.id,r.name,r.loc,r.req,isoD(r.last),isoD(r.win),isoD(r.due),r.days,r.notAssigned?'Current - next not assigned':r.status,fmtMin(r.len)]));
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.req,isoD(r.last),isoD(r.win),isoD(r.due),r.days,r.notAssigned?'Current - next not assigned':r.status,(r.len!=null?fmtMin(r.len):r.lenText)]));
     } else if(F.view==='emp'){
       lines = [['Employee ID','Name','Location','Role','Current','Expires 30 days','Expires 31-60','Expires 61-90','Expired','Failed','Not completed','Total']]
         .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.current,e.d30,e.d60,e.d90,e.expired,e.failed,e.notdone,e.total]));
     } else {
       lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Course Length','Replaced by retake']]
-        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],fmtMin(r.len),r.old?'Yes':'']));
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],(r.len!=null?fmtMin(r.len):r.lenText),r.old?'Yes':'']));
     }
     // With a plant-site course picked, add the readiness and what is missing for each mill.
     const mills = F.view==='ref' ? [] : selMills();
