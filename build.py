@@ -687,6 +687,8 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
+    _hits = sorted(set(n for n in names if n and re.search(r"nucor|masc|bsafe|ma-sc|mid.?atlantic|berkeley", n, re.I)))
+    print("::notice title=TEMP course names::" + " | ".join(_hits)[:3500])
     data["courseLenText"] = LEN_TEXT
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"] and q not in LEN_TEXT]
