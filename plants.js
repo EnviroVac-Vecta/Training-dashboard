@@ -5,6 +5,7 @@
      3. that mill's PSM orientation too, when the mill has one ("Mill and PSM" courses cover 2 and 3 together).
    Green = all current. Yellow = all current but something expires within 30 days.
    Red = something missing, expired or failed.
+   Other sites with their own required courses (Nucor Berkeley: its ISNetworld orientation + MASC BSAFE) are in SITES below.
    The dashboard script (index.html) uses window.PLANT; this file loads first. */
 window.PLANT = (function(){
 const SOON = 30;
@@ -55,5 +56,18 @@ function readiness(recs, mill, today){
   const light = reqs.reduce((a,r)=>RANK[r.s]>RANK[a]?r.s:a,'green');
   return {light, reqs};
 }
-return {classify, readiness, LIGHT, RANK};
+// ---------- Other sites (not TAPPISAFE mills): each requirement matches a course name ----------
+// Picking any of a site's courses in the Course filter turns on that site's ready lights.
+const SITES = [
+  {mk:'site:nucor-berkeley', name:'Nucor Berkeley', reqs:[
+    {label:'Nucor Berkeley Online Training (ISNetworld)', match:/nucor\s*(steel\s*)?berkeley/i},
+    {label:'MASC BSAFE', match:/bsafe/i},
+  ]},
+];
+function siteFor(course){ return SITES.find(s=>s.reqs.some(q=>q.match.test(String(course||'')))) || null; }
+function siteReadiness(recs, site, today){
+  const reqs = site.reqs.map(q=>req(best(recs.filter(r=>q.match.test(r.course||''))), q.label, today));
+  return {light: reqs.reduce((a,r)=>RANK[r.s]>RANK[a]?r.s:a,'green'), reqs};
+}
+return {classify, readiness, LIGHT, RANK, SITES, siteFor, siteReadiness};
 })();

@@ -188,6 +188,55 @@ def fetch_xlsx(secret_name, label):
     return body
 
 
+def fetch_file(secret_name, label):
+    """Post to a Power Automate flow that answers with a file (any type). None if the secret isn't set."""
+    secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
+    url = secrets.get(secret_name) or os.environ.get(secret_name)
+    if not url:
+        return None
+    try:
+        res = requests.post(url, json={}, timeout=180)
+    except Exception as e:
+        print(f"::warning title={label}::The {label} flow didn't answer ({e}); skipping it.")
+        return None
+    body = res.content
+    if res.status_code == 200 and body[:1] in (b"{",):
+        try:
+            j = res.json()
+            body = base64.b64decode(j.get("$content") or j.get("fileContent") or j.get("body", {}).get("$content"))
+        except Exception:
+            pass
+    if res.status_code != 200 or not body:
+        print(f"::warning title={label}::The {label} flow answered {res.status_code}; skipping it.")
+        return None
+    return body
+
+
+def read_masc(raw):
+    """MASC (Mid-Atlantic Safety Council) Current Training CSV -> compact rows (BSAFE etc.)."""
+    import csv
+    text = raw.decode("utf-8-sig", errors="replace")
+    rows = list(csv.reader(io.StringIO(text)))
+    for h, row in enumerate(rows[:10]):
+        hdr = [norm(c) for c in row]
+        if "class name" in hdr and "last name" in hdr:
+            break
+    else:
+        print("::warning title=MASC::Couldn't find the header row in MASC.csv; skipping it.")
+        return None
+    col = lambda n: hdr.index(n) if n in hdr else None
+    ix = {k: col(n) for k, n in (("first", "first name"), ("last", "last name"), ("id", "student id"), ("code", "class code"),
+                                 ("course", "class name"), ("date", "class date"), ("exp", "expires"))}
+    out = []
+    for r in rows[h + 1:]:
+        g = lambda k: r[ix[k]].strip() if ix[k] is not None and ix[k] < len(r) else ""
+        if not g("course") or not g("last"):
+            continue
+        out.append([g("first"), g("last"), g("id"), g("course"), g("code"), iso(g("date")), iso(g("exp"))])
+    print(f"MASC: {len(out):,} course records.")
+    return {"cols": ["first", "last", "id", "course", "code", "date", "exp"], "rows": out}
+
+
 def read_tappi(xlsx_bytes):
     """TAPPISAFE Student Attendance export -> compact rows for the Plant Sites tab."""
     wb = load_workbook(io.BytesIO(xlsx_bytes), read_only=True, data_only=True)
@@ -672,6 +721,11 @@ def main():
     tappi = read_tappi(tappi_bytes) if tappi_bytes else None
     if tappi:
         data["tappi"] = tappi
+    # MASC Current Training (MASC.csv, pulled daily by the masc bot), for sites that require MASC courses such as BSAFE
+    masc_bytes = fetch_file("MASC_URL", "MASC")
+    masc = read_masc(masc_bytes) if masc_bytes else None
+    if masc:
+        data["masc"] = masc
     # Refresher Training view: HSI Training Requirement Status (HSI Refresher Training.xlsx).
     ref_path = os.environ.get("REFRESHER_FILE")
     ref_bytes = open(ref_path, "rb").read() if ref_path else fetch_xlsx("REFRESHER_URL", "Refresher")
@@ -687,8 +741,6 @@ def main():
     if refresher:
         names += refresher["reqs"]
     data["courseLen"] = course_length_map(names)
-    _hits = sorted(set(n for n in names if n and re.search(r"nucor|masc|bsafe|ma-sc|mid.?atlantic|berkeley", n, re.I)))
-    print("::notice title=TEMP course names::" + " | ".join(_hits)[:3500])
     data["courseLenText"] = LEN_TEXT
     if refresher:
         no = [q for q in refresher["reqs"] if q not in data["courseLen"] and q not in LEN_TEXT]
@@ -712,6 +764,7 @@ def main():
         f.write("User-agent: *\nDisallow: /\n")
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
+          + (f", {len(masc['rows']):,} MASC records" if masc else ", no MASC file (add the MASC_URL secret)")
           + (f", {len(refresher['rows']):,} refresher rows" if refresher else ", no refresher file yet (add the REFRESHER_URL secret)"))
 
 

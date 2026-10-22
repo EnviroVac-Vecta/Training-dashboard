@@ -453,6 +453,7 @@ function build(data){
   // Give them the same name as the TAPPI file uses so each course is listed once, and let them count for site readiness.
   RECS.forEach(r=>{ if(/\(\s*12[A-Z0-9]+\s*\)\s*$/i.test(r.course||'') && window.PLANT){ const p=window.PLANT.classify(r.course); if(p){ r.course=p.name; r.plant=p; r.hay=(r.name+' '+r.id+' '+r.course).toLowerCase(); } } });
   if(data.tappi && data.tappi.rows) addTappi(data.tappi);
+  if(data.masc && data.masc.rows) addMasc(data.masc);
   // The same completion can come from both HSI and the TAPPI file: keep one (the TAPPI copy).
   { const seen=new Set(RECS.filter(r=>r.source==='TAPPI').map(r=>r.empKey+'|'+r.course.toLowerCase()+'|'+isoD(r.completed)));
     RECS = RECS.filter(r=>r.source==='TAPPI' || !r.plant || !seen.has(r.empKey+'|'+r.course.toLowerCase()+'|'+isoD(r.completed))); }
@@ -512,16 +513,39 @@ function addTappi(tp){
       if(plant.kind==='psm'||plant.kind==='millpsm') m.psm = true; }
   });
 }
-// Mills whose courses are picked in the Course filter.
+// ---------- MASC records (Mid-Atlantic Safety Council, e.g. BSAFE) ----------
+function addMasc(mc){
+  const ci = Object.fromEntries(mc.cols.map((c,i)=>[c,i]));
+  const hsi = new Map(); RECS.forEach(r=>{ if(r.source!=='TAPPI'){ const k=nameKey(r.name); if(k && !hsi.has(k)) hsi.set(k, r); } });
+  mc.rows.forEach(row=>{
+    const mname = (String(row[ci.first]||'')+' '+String(row[ci.last]||'')).replace(/\s+/g,' ').trim();
+    const h = hsi.get(nameKey(mname));
+    const r = {
+      i: RECS.length, id: h ? h.id : '', name: h ? h.name : mname, role: h ? h.role : 'Not set',
+      loc: h ? h.loc : 'Not matched to HSI', course: 'MASC - '+String(row[ci.course]||'').trim(), score: null, assigned: null,
+      completed: parseD(row[ci.date]), expire: parseD(row[ci.exp]), src: 'Completed', old:false, retakes:0,
+      source:'MASC', mascId: String(row[ci.id]||'')
+    };
+    r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
+    r.st = classify(r);
+    r.empKey = h ? h.empKey : 'MASC '+(r.mascId || mname);
+    r.hay = (r.name+' '+r.id+' '+r.mascId+' '+r.course).toLowerCase();
+    RECS.push(r);
+  });
+}
+// Mills (TAPPISAFE) and other sites (Nucor Berkeley...) whose courses are picked in the Course filter.
 function selMills(){
   const out = new Map();
-  F.course.forEach(c=>{ const p = window.PLANT && window.PLANT.classify(c); if(p && p.mill && MILLS.has(p.mk)) out.set(p.mk, MILLS.get(p.mk)); });
+  F.course.forEach(c=>{
+    const p = window.PLANT && window.PLANT.classify(c); if(p && p.mill && MILLS.has(p.mk)) out.set(p.mk, MILLS.get(p.mk));
+    const s = window.PLANT && window.PLANT.siteFor && window.PLANT.siteFor(c); if(s) out.set(s.mk, s);
+  });
   return [...out.values()];
 }
 let BYEMP = null;
 function empRecs(key){ if(!BYEMP){ BYEMP = new Map(); RECS.forEach(r=>{ (BYEMP.get(r.empKey)||BYEMP.set(r.empKey,[]).get(r.empKey)).push(r); }); } return BYEMP.get(key)||[]; }
 const RCACHE = new Map();
-function ready(key, mill){ const k=key+'|'+mill.mk; if(!RCACHE.has(k)) RCACHE.set(k, window.PLANT.readiness(empRecs(key), mill, today)); return RCACHE.get(k); }
+function ready(key, mill){ const k=key+'|'+mill.mk; if(!RCACHE.has(k)) RCACHE.set(k, mill.reqs ? window.PLANT.siteReadiness(empRecs(key), mill, today) : window.PLANT.readiness(empRecs(key), mill, today)); return RCACHE.get(k); }
 function worst(key, mills){ return mills.map(m=>ready(key,m).light).reduce((a,l)=>window.PLANT.RANK[l]>window.PLANT.RANK[a]?l:a,'green'); }
 let LIGHTF = [];
 function dots(key, mills){ const L=window.PLANT.LIGHT; return mills.map(m=>{ const l=ready(key,m).light; return '<i class="dot" style="--c:var('+L[l].c+')" title="'+esc(m.name+': '+L[l].label)+'"></i>'; }).join(''); }
@@ -531,7 +555,10 @@ function renderSiteBar(base){
   const L = window.PLANT.LIGHT, n = {green:0,yellow:0,red:0};
   [...new Set(base.map(r=>r.empKey))].forEach(k=>n[worst(k,mills)]++);
   bar.hidden = false;
-  bar.innerHTML = '<span class="what"><b>'+esc(mills.map(m=>m.name+(m.psm?' (PSM)':'')).join(', '))+'</b>: ready means TAPPISAFE Basic or Basic Refresher, the mill orientation'+(mills.some(m=>m.psm)?', and the PSM orientation where the mill has one':'')+', all passed and not expired. Click a name to see what is missing.</span>'+
+  const tp = mills.filter(m=>!m.reqs), st = mills.filter(m=>m.reqs);
+  const what = (tp.length ? 'ready means TAPPISAFE Basic or Basic Refresher, the mill orientation'+(tp.some(m=>m.psm)?', and the PSM orientation where the mill has one':'')+', all passed and not expired' : '')+
+    (tp.length && st.length ? '; ' : '')+st.map(m=>m.name+' needs '+m.reqs.map(q=>q.label).join(' and ')+', current').join('; ');
+  bar.innerHTML = '<span class="what"><b>'+esc(mills.map(m=>m.name+(m.psm?' (PSM)':'')).join(', '))+'</b>: '+esc(what)+'. Click a name to see what is missing.</span>'+
     '<span class="lights'+(LIGHTF.length?' dim':'')+'">'+['green','yellow','red'].map(k=>'<button type="button" class="light" data-light="'+k+'" aria-pressed="'+LIGHTF.includes(k)+'" style="--c:var('+L[k].c+')"><i class="dot"></i>'+L[k].label+' <b>'+n[k]+'</b></button>').join('')+'</span>';
   return mills;
 }
@@ -696,11 +723,12 @@ function drawSiteReqs(){
 function openCard(key){
   const recs = empRecs(key), rref = REF.rows.find(r=>r.empKey===key);
   if(!recs.length && !rref) return;
-  const r0 = recs.find(r=>r.source!=='TAPPI') || recs[0] || rref, L = window.PLANT.LIGHT;
+  const r0 = recs.find(r=>r.source!=='TAPPI' && r.source!=='MASC') || recs[0] || rref, L = window.PLANT.LIGHT;
   const tid = (recs.find(r=>r.tappiId)||{}).tappiId;
   let mills = selMills();
   if(!mills.length){ // no plant course picked: show every mill this person has a TAPPI record for
-    mills = [...new Set(recs.filter(r=>r.plant&&r.plant.mk).map(r=>r.plant.mk))].map(k=>MILLS.get(k)).filter(Boolean);
+    mills = [...new Set(recs.filter(r=>r.plant&&r.plant.mk).map(r=>r.plant.mk))].map(k=>MILLS.get(k)).filter(Boolean)
+      .concat((window.PLANT.SITES||[]).filter(st=>recs.some(r=>st.reqs.some(q=>q.match.test(r.course||'')))));
   }
   let h = '<div class="card-top"><div><h2 id="card-name">'+esc(r0.name)+'</h2><span class="sub">'+esc([r0.id||(tid?'':'No ID'), tid?'TAPPI '+tid:'', r0.loc, r0.role==='Not set'?'':r0.role].filter(Boolean).join(' · '))+'</span></div>'+
     '<button type="button" class="card-x" id="card-x" aria-label="Close">×</button></div>';
@@ -715,7 +743,7 @@ function openCard(key){
     '</tbody></table></div></section>';
   const cur = recs.filter(r=>!r.old && r.course).sort((a,b)=>stOrder[a.st]-stOrder[b.st] || a.course.localeCompare(b.course));
   h += '<section><h3>All training on file<span class="lbl">'+cur.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
-    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+noteTag(r.course)+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
+    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+noteTag(r.course)+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
     '</tbody></table></div></section>';
   h += '<div><button type="button" class="btn" id="card-filter">Show only this employee\'s records</button></div>';
   $('card').innerHTML = h; $('cardbg').hidden = false; $('card-x').focus();
@@ -897,7 +925,7 @@ function renderRecords(base, mills){
       (mills.length?'<td class="ready">'+dots(r.empKey,mills)+'</td>':'')+
       '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||(r.tappiId?'TAPPI '+r.tappiId:'No ID'))+'</span></td>'+
       '<td>'+esc(r.loc)+'</td><td>'+esc(r.role)+'</td>'+
-      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'?'<span class="src">TAPPI</span>':'')+noteTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
+      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+noteTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td>'+

@@ -36,3 +36,12 @@ No training data is stored in this repo; it only goes into the published site.
 - The Training Summary file must keep these column headers: Employee ID, Name, Role, Location,
   Course Name, Score, Date Assigned, Date Completed, Date Expire, Status.
 - If a run fails, open it in Actions; the error is shown on the run's summary page.
+
+## Nucor Berkeley (ISNetworld + MASC)
+Picking **Nucor Berkeley Online Training** or the **MASC - BSAFE** course in the Course filter turns on the Nucor Berkeley
+ready lights: ready = Nucor Berkeley Online Training (from HSI) **and** MASC BSAFE, both current. The rule lives in
+`plants.js` (`SITES`), so other sites with their own required courses can be added the same way.
+
+MASC records come from `MASC.csv` (Project Polarity > Alteryx > MASC, replaced each morning by the `masc` bot) through a flow:
+**When an HTTP request is received** (Anyone) > **Get file content** (SharePoint, Project Polarity, `/Shared Documents/Alteryx/MASC/MASC.csv`)
+> **Response** 200, Body = File Content. Its URL goes in the `MASC_URL` secret.
