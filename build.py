@@ -763,7 +763,9 @@ def main():
         print("No DASHBOARD_PASSCODE secret: publishing without a passcode.")
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
-    print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees"
+    pi = cols.index("Personal ID")
+    with_pid = sum(1 for r in rows if r[pi] not in (None, ""))
+    print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees, Personal ID on {with_pid:,} rows"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
           + (f", {len(masc['rows']):,} MASC records" if masc else ", no MASC file (add the MASC_URL secret)")
           + (f", {len(refresher['rows']):,} refresher rows" if refresher else ", no refresher file yet (add the REFRESHER_URL secret)"))
