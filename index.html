@@ -441,12 +441,13 @@ function build(data){
       i, id:row[ci['Employee ID']]||'', name:row[ci['Name']]||'', role:row[ci['Role']]||'Not set',
       loc:row[ci['Location']]||'Unassigned', course:row[ci['Course Name']]||'', score:row[ci['Score']],
       assigned:parseD(row[ci['Date Assigned']]), completed:parseD(row[ci['Date Completed']]),
-      expire:parseD(row[ci['Date Expire']]), src:row[ci['Status']]||'', old:false, retakes:0
+      expire:parseD(row[ci['Date Expire']]), src:row[ci['Status']]||'', old:false, retakes:0,
+      pid: ci['Personal ID']!=null && row[ci['Personal ID']]!=null ? String(row[ci['Personal ID']]) : ''
     };
     r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
     r.st = classify(r);
     r.empKey = r.id || r.name;
-    r.hay = (r.name+' '+r.id+' '+r.course).toLowerCase();
+    r.hay = (r.name+' '+r.id+' '+r.pid+' '+r.course).toLowerCase();
     return r;
   });
   // HSI also carries TAPPISAFE courses, named with their TAPPI code, e.g. "... Mill and PSM Orientatio (12TIPROM)".
@@ -502,7 +503,7 @@ function addTappi(tp){
       loc: h ? h.loc : 'Not matched to HSI', course: plant.name, score: null, assigned: null,
       completed: parseD(row[ci.date]), expire: parseD(row[ci.exp]),
       src: /^\(P\)|pass/i.test(String(row[ci.grade]||'')) ? 'Completed' : 'Failed', old:false, retakes:0,
-      source:'TAPPI', tappiId: String(row[ci.id]||''), plant
+      source:'TAPPI', tappiId: String(row[ci.id]||''), pid: String(row[ci.id]||''), plant
     };
     r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
     r.st = classify(r);
@@ -524,7 +525,7 @@ function addMasc(mc){
       i: RECS.length, id: h ? h.id : '', name: h ? h.name : mname, role: h ? h.role : 'Not set',
       loc: h ? h.loc : 'Not matched to HSI', course: 'MASC - '+String(row[ci.course]||'').trim(), score: null, assigned: null,
       completed: parseD(row[ci.date]), expire: parseD(row[ci.exp]), src: 'Completed', old:false, retakes:0,
-      source:'MASC', mascId: String(row[ci.id]||'')
+      source:'MASC', mascId: String(row[ci.id]||''), pid: String(row[ci.id]||'')
     };
     r.days = r.expire ? Math.round((r.expire - today)/DAY) : null;
     r.st = classify(r);
@@ -887,7 +888,7 @@ function chips(){
 
 const recCols = [
   ['name','Employee'],['loc','Location'],['role','Role'],['course','Course'],
-  ['completed','Completed'],['expire','Expires'],['days','Days left'],['st','Status'],['len','Length']
+  ['completed','Completed'],['expire','Expires'],['days','Days left'],['st','Status'],['len','Length'],['pid','Personal ID']
 ];
 const stOrder = Object.fromEntries(ST.map((s,i)=>[s.k,i]));
 function cmp(a,b,key){
@@ -929,9 +930,10 @@ function renderRecords(base, mills){
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td>'+
-      '<td class="num" title="Time the course takes to complete">'+(r.len!=null?fmtMin(r.len):'<span class="sub">'+esc(r.lenText)+'</span>')+'</td></tr>';
+      '<td class="num" title="Time the course takes to complete">'+(r.len!=null?fmtMin(r.len):'<span class="sub">'+esc(r.lenText)+'</span>')+'</td>'+
+      '<td class="num" title="ID in the system this training came from ('+esc(r.source||'HSI')+')">'+esc(r.pid||'')+'</td></tr>';
   }).join('');
-  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(9+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
+  $('tbl').querySelector('tbody').innerHTML = body || '<tr><td colspan="'+(10+(mills.length?1:0))+'"><div class="empty">No training records match these filters. Try clearing a filter.</div></td></tr>';
   $('count').textContent = rows.length.toLocaleString()+' record'+(rows.length===1?'':'s')+' · '+new Set(rows.map(r=>r.empKey)).size.toLocaleString()+' employees';
   $('more').hidden = rows.length<=shown;
   $('morebtn').textContent = 'Show '+Math.min(PAGE,rows.length-shown)+' more of '+(rows.length-shown).toLocaleString()+' remaining';
@@ -1037,8 +1039,8 @@ $('tbl').addEventListener('click',e=>{
       lines = [['Employee ID','Name','Location','Role','Current','Expires 30 days','Expires 31-60','Expires 61-90','Expired','Failed','Not completed','Total']]
         .concat(current.map(e=>[e.id,e.name,e.loc,e.role,e.current,e.d30,e.d60,e.d90,e.expired,e.failed,e.notdone,e.total]));
     } else {
-      lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Course Length','Replaced by retake']]
-        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],(r.len!=null?fmtMin(r.len):r.lenText),r.old?'Yes':'']));
+      lines = [['Employee ID','Name','Location','Role','Course','Date Completed','Date Expire','Days Left','Status','Course Length','Personal ID','Replaced by retake']]
+        .concat(current.map(r=>[r.id,r.name,r.loc,r.role,r.course,isoD(r.completed),isoD(r.expire),r.days,short[r.st],(r.len!=null?fmtMin(r.len):r.lenText),r.pid||'',r.old?'Yes':'']));
     }
     // With a plant-site course picked, add the readiness and what is missing for each mill.
     const mills = F.view==='ref' ? [] : selMills();

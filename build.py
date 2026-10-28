@@ -41,6 +41,7 @@ COLUMNS = {
     "Date Completed": ["datecompleted", "completed", "completeddate", "completiondate"],
     "Date Expire": ["dateexpire", "expire", "expires", "expiredate", "expirationdate", "dateexpires"],
     "Status": ["status", "coursestatus", "completionstatus"],
+    "Personal ID": ["personalid", "personid", "personalidnumber", "personnelid"],
 }
 REQUIRED = ["Name", "Course Name", "Date Expire", "Status"]
 
