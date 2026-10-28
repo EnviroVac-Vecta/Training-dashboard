@@ -770,9 +770,9 @@ def main():
         ci_ = cols.index("Course Name")
         has = Counter(str(r[ci_])[:40] for r in rows if r[pi] not in (None, ""))
         miss = Counter(str(r[ci_])[:40] for r in rows if r[pi] in (None, ""))
-        print("::notice title=PID diag has::" + "; ".join(f"{k} ({v})" for k, v in has.most_common(25))[:3500])
-        print("::notice title=PID diag missing::" + "; ".join(f"{k} ({v})" for k, v in miss.most_common(25))[:3500])
-        print("::notice title=PID diag sample::" + "; ".join(str(r[pi]) for r in rows if r[pi] not in (None, ""))[:300])
+        print("::notice title=PID diag missing::" + "; ".join(f"{k} ({v})" for k, v in miss.most_common(30))[:2500]
+              + " || SAMPLE " + "; ".join(str(r[pi]) for r in rows[:4000:150] if r[pi] not in (None, ""))[:300]
+              + " || COLS " + ", ".join(str(r[cols.index("Status")]) for r in rows[:1])[:50])
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees, Personal ID on {with_pid:,} rows"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
           + (f", {len(masc['rows']):,} MASC records" if masc else ", no MASC file (add the MASC_URL secret)")
