@@ -769,4 +769,10 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    try:
+        main()
+    except SystemExit as e:
+        # show why on the run's summary page (the log isn't easy to reach)
+        if e.code not in (None, 0):
+            print(f"::error title=Training dashboard build stopped::{str(e.code)[:900]}")
+        raise
