@@ -764,6 +764,10 @@ def main():
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     pi = cols.index("Personal ID")
+    from collections import Counter as _C
+    _ci = cols.index("Course Name")
+    _bc = _C(str(r[_ci]) for r in rows if re.search(r"brunswick|\bbci\b|cellulose|georgia|\bgp\b", str(r[_ci] or ""), re.I))
+    print("::notice title=TEMP brunswick courses::" + "; ".join(f"{k} ({v})" for k, v in _bc.most_common(40))[:3800])
     with_pid = sum(1 for r in rows if r[pi] not in (None, ""))
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees, Personal ID on {with_pid:,} rows"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
