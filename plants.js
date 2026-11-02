@@ -73,7 +73,7 @@ function merged(course){
 }
 const SITES = [
   {mk:'site:bci-gp-brunswick', name:'BCI - GP Brunswick', reqs:[
-    {label:'GP Brunswick orientation (Abbotsfield or ISNetworld)', match:/^BCI - GP Brunswick$/i},
+    {label:'GP Brunswick orientation (Abbotsfield or ISNetworld)', match:/^BCI - GP Brunswick$/i, missing:'Missing - take it in ISNetworld'},
   ]},
   {mk:'site:nucor-berkeley', name:'Nucor Berkeley', reqs:[
     {label:'Nucor Berkeley Online Training (ISNetworld)', match:/nucor\s*(steel\s*)?berkeley/i},
@@ -82,7 +82,12 @@ const SITES = [
 ];
 function siteFor(course){ return SITES.find(s=>s.reqs.some(q=>q.match.test(String(course||'')))) || null; }
 function siteReadiness(recs, site, today){
-  const reqs = site.reqs.map(q=>req(best(recs.filter(r=>q.match.test(r.course||''))), q.label, today));
+  const reqs = site.reqs.map(q=>{
+    const x = req(best(recs.filter(r=>q.match.test(r.course||''))), q.label, today);
+    if(x.s==='red' && x.rec && x.rec.retakeIn) x.text += ' - needs to retake in '+x.rec.retakeIn;
+    if(x.s==='red' && !x.rec && q.missing) x.text = q.missing;
+    return x;
+  });
   return {light: reqs.reduce((a,r)=>RANK[r.s]>RANK[a]?r.s:a,'green'), reqs};
 }
 return {classify, readiness, LIGHT, RANK, SITES, siteFor, siteReadiness, merged};
