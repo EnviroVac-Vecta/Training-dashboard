@@ -5,7 +5,8 @@
      3. that mill's PSM orientation too, when the mill has one ("Mill and PSM" courses cover 2 and 3 together).
    Green = all current. Yellow = all current but something expires within 30 days.
    Red = something missing, expired or failed.
-   Other sites with their own required courses (Nucor Berkeley: its ISNetworld orientation + MASC BSAFE) are in SITES below.
+   Other sites with their own required courses (Nucor Berkeley: its ISNetworld orientation + MASC BSAFE;
+   BCI - GP Brunswick: Abbotsfield or ISNetworld orientation) are in SITES below.
    The dashboard script (index.html) uses window.PLANT; this file loads first. */
 window.PLANT = (function(){
 const SOON = 30;
@@ -58,7 +59,22 @@ function readiness(recs, mill, today){
 }
 // ---------- Other sites (not TAPPISAFE mills): each requirement matches a course name ----------
 // Picking any of a site's courses in the Course filter turns on that site's ready lights.
+// Sites changing training platforms: one course name for the old and new course, so the newest
+// completion from either platform counts (the older one shows as replaced).
+const MERGED = [
+  {name:'BCI - GP Brunswick', parts:[
+    {via:'Abbotsfield', match:/^\s*GP\s+Brunswick\s*$/i},
+    {via:'ISNetworld', match:/^\s*Brunswick,?\s*GA\s+Cellulose\s+Contractor\s+Safety\s+Orientation/i},
+  ]},
+];
+function merged(course){
+  for(const m of MERGED){ const p=m.parts.find(q=>q.match.test(String(course||''))); if(p) return {name:m.name, via:p.via}; }
+  return null;
+}
 const SITES = [
+  {mk:'site:bci-gp-brunswick', name:'BCI - GP Brunswick', reqs:[
+    {label:'GP Brunswick orientation (Abbotsfield or ISNetworld)', match:/^BCI - GP Brunswick$/i},
+  ]},
   {mk:'site:nucor-berkeley', name:'Nucor Berkeley', reqs:[
     {label:'Nucor Berkeley Online Training (ISNetworld)', match:/nucor\s*(steel\s*)?berkeley/i},
     {label:'MASC BSAFE', match:/bsafe/i},
@@ -69,5 +85,5 @@ function siteReadiness(recs, site, today){
   const reqs = site.reqs.map(q=>req(best(recs.filter(r=>q.match.test(r.course||''))), q.label, today));
   return {light: reqs.reduce((a,r)=>RANK[r.s]>RANK[a]?r.s:a,'green'), reqs};
 }
-return {classify, readiness, LIGHT, RANK, SITES, siteFor, siteReadiness};
+return {classify, readiness, LIGHT, RANK, SITES, siteFor, siteReadiness, merged};
 })();

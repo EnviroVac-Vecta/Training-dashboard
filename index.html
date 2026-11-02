@@ -453,6 +453,8 @@ function build(data){
   // HSI also carries TAPPISAFE courses, named with their TAPPI code, e.g. "... Mill and PSM Orientatio (12TIPROM)".
   // Give them the same name as the TAPPI file uses so each course is listed once, and let them count for site readiness.
   RECS.forEach(r=>{ if(/\(\s*12[A-Z0-9]+\s*\)\s*$/i.test(r.course||'') && window.PLANT){ const p=window.PLANT.classify(r.course); if(p){ r.course=p.name; r.plant=p; r.hay=(r.name+' '+r.id+' '+r.course).toLowerCase(); } } });
+  // Sites moving between platforms (GP Brunswick: Abbotsfield -> ISNetworld) are listed as one course.
+  if(window.PLANT && window.PLANT.merged) RECS.forEach(r=>{ const m=window.PLANT.merged(r.course); if(m){ r.origCourse=r.course; r.course=m.name; r.via=m.via; r.hay=(r.name+' '+r.id+' '+(r.pid||'')+' '+r.course+' '+r.origCourse).toLowerCase(); } });
   if(data.tappi && data.tappi.rows) addTappi(data.tappi);
   if(data.masc && data.masc.rows) addMasc(data.masc);
   // The same completion can come from both HSI and the TAPPI file: keep one (the TAPPI copy).
@@ -662,7 +664,7 @@ const fmtMin = m => m==null ? '' : [Math.floor(m/60)?Math.floor(m/60)+' hr':'', 
 function setLengths(data){
   COURSE_LEN = data.courseLen || {}; LEN_TEXT = data.courseLenText || {};
   Object.entries(COURSE_LEN).forEach(([k,m])=>{ const n=lkey(k); if(n && !(n in COURSE_LEN_N)) COURSE_LEN_N[n]=m; });
-  RECS.forEach(r=>{ r.len = courseMin(r.course); r.lenText = LEN_TEXT[r.course]||''; });
+  RECS.forEach(r=>{ const c=r.origCourse||r.course; r.len = courseMin(c); r.lenText = LEN_TEXT[c]||''; });
   REF.rows.forEach(r=>{ r.len = courseMin(r.req); r.lenText = LEN_TEXT[r.req]||''; });
 }
 
@@ -744,7 +746,7 @@ function openCard(key){
     '</tbody></table></div></section>';
   const cur = recs.filter(r=>!r.old && r.course).sort((a,b)=>stOrder[a.st]-stOrder[b.st] || a.course.localeCompare(b.course));
   h += '<section><h3>All training on file<span class="lbl">'+cur.length+'</span></h3><div style="overflow-x:auto"><table class="recs"><tbody>'+
-    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+noteTag(r.course)+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
+    cur.map(r=>'<tr><td>'+esc(r.course)+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+(r.via?'<span class="src" title="'+esc(r.origCourse)+'">'+r.via+'</span>':'')+noteTag(r.course)+'</td><td class="date">'+fmtD(r.expire)+'</td><td><span class="pill" style="--c:var('+STMAP[r.st].c+')">'+short[r.st]+'</span></td></tr>').join('')+
     '</tbody></table></div></section>';
   h += '<div><button type="button" class="btn" id="card-filter">Show only this employee\'s records</button></div>';
   $('card').innerHTML = h; $('cardbg').hidden = false; $('card-x').focus();
@@ -926,7 +928,7 @@ function renderRecords(base, mills){
       (mills.length?'<td class="ready">'+dots(r.empKey,mills)+'</td>':'')+
       '<td><button type="button" class="who" data-emp="'+esc(r.empKey)+'" title="See this employee\'s training">'+esc(r.name)+'</button><span class="sub">'+esc(r.id||(r.tappiId?'TAPPI '+r.tappiId:'No ID'))+'</span></td>'+
       '<td>'+esc(r.loc)+'</td><td>'+esc(r.role)+'</td>'+
-      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+noteTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
+      '<td class="course">'+(r.course?esc(r.course):'<span class="sub">—</span>')+(r.source==='TAPPI'||r.source==='MASC'?'<span class="src">'+r.source+'</span>':'')+(r.via?'<span class="src" title="'+esc(r.origCourse)+'">'+r.via+'</span>':'')+noteTag(r.course)+(r.retakes?'<span class="tag" title="Replaces '+r.retakes+' older record(s)">retake</span>':'')+(r.old?'<span class="tag">replaced</span>':'')+'</td>'+
       '<td class="date">'+fmtD(r.completed)+'</td><td class="date">'+fmtD(r.expire)+'</td>'+
       '<td class="num">'+days+'</td>'+
       '<td><span class="pill'+(r.old?' soft':'')+'" style="--c:var('+s.c+')">'+short[r.st]+'</span></td>'+
