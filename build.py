@@ -773,8 +773,14 @@ def main():
         print("::warning title=Dates the dashboard couldn't read::" + "; ".join(f"{k} ({v})" for k, v in sorted(UNPARSED.items(), key=lambda x: -x[1])[:30])[:3000])
     _ci, _ei = cols.index("Course Name"), cols.index("Date Expire")
     _gb = [r for r in rows if re.search(r"brunswick", str(r[_ci] or ""), re.I)]
-    print(f"::notice title=GP Brunswick rows::{len(_gb)} rows, {sum(1 for r in _gb if r[_ei])} with an expiration date; statuses: "
-          + ", ".join(sorted({str(r[cols.index('Status')]) for r in _gb})))
+    from collections import Counter as _C
+    _si, _di = cols.index("Status"), cols.index("Date Completed")
+    _parts = []
+    for _c in sorted({str(r[_ci]) for r in _gb}):
+        _g = [r for r in _gb if str(r[_ci]) == _c]
+        _parts.append(f"{_c}: {len(_g)} rows, {sum(1 for r in _g if r[_di])} completed dates, {sum(1 for r in _g if r[_ei])} expire dates, "
+                      + str(dict(_C(str(r[_si]) for r in _g))))
+    print("::notice title=GP Brunswick rows::" + " || ".join(_parts))
     with_pid = sum(1 for r in rows if r[pi] not in (None, ""))
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees, Personal ID on {with_pid:,} rows"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
