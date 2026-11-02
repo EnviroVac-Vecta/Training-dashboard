@@ -90,15 +90,20 @@ def iso(value):
     else:
         text = str(value).strip()
         d = None
-        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y", "%Y-%m-%d %H:%M:%S", "%m/%d/%Y %H:%M", "%m/%d/%Y %I:%M %p"):
+        for fmt in ("%Y-%m-%d", "%m/%d/%Y", "%m/%d/%y", "%m-%d-%Y", "%m-%d-%y", "%Y-%m-%d %H:%M:%S",
+                    "%m/%d/%Y %H:%M", "%m/%d/%Y %I:%M %p", "%m-%d-%Y %H:%M", "%Y/%m/%d"):
             try:
                 d = datetime.strptime(text, fmt).date()
                 break
             except ValueError:
                 continue
         if d is None:
+            UNPARSED[text] = UNPARSED.get(text, 0) + 1
             return None
     return d.isoformat()
+
+
+UNPARSED = {}
 
 
 def read_rows(xlsx_bytes):
@@ -764,6 +769,12 @@ def main():
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     pi = cols.index("Personal ID")
+    if UNPARSED:
+        print("::warning title=Dates the dashboard couldn't read::" + "; ".join(f"{k} ({v})" for k, v in sorted(UNPARSED.items(), key=lambda x: -x[1])[:30])[:3000])
+    _ci, _ei = cols.index("Course Name"), cols.index("Date Expire")
+    _gb = [r for r in rows if re.search(r"brunswick", str(r[_ci] or ""), re.I)]
+    print(f"::notice title=GP Brunswick rows::{len(_gb)} rows, {sum(1 for r in _gb if r[_ei])} with an expiration date; statuses: "
+          + ", ".join(sorted({str(r[cols.index('Status')]) for r in _gb})))
     with_pid = sum(1 for r in rows if r[pi] not in (None, ""))
     print(f"::notice title=Training dashboard::{len(rows):,} rows, {people:,} employees, Personal ID on {with_pid:,} rows"
           + (f", {len(tappi['rows']):,} TAPPI records" if tappi else ", no TAPPI file yet (plant-site readiness off; add the TAPPI_URL secret)")
