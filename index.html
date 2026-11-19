@@ -328,7 +328,7 @@ footer{font-size:12px;color:var(--muted);max-width:80ch}
       <p><b>What it holds:</b> every training record from the HSI Training Summary plus the plant-site orientations from TAPPISAFE (marked with a <span class="src">TAPPI</span> tag). One row per person per course, with location, role, completed date, expiration date, days left and <b>Length</b> (how long the course takes to complete, from the HSI hours reference sheet, the TAPPISAFE course list and the site training times list; ISNetworld site courses use the ISNetworld site times when the site has only that one course; a course at a site with several courses stays blank until its own time is known, since pay is figured per course taken. Courses with no time to pay show why instead: <i>Title Only</i>, <i>Document</i> or <i>Medical</i>).</p>
       <p><b>Views:</b> <b>Training records</b> lists each course record. <b>By employee</b> shows one row per person with a count of courses in each status.</p>
       <h3>Status colors</h3>
-      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned in HSI but not finished.</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
+      <ul class="legendlist"><li><i class="dot" style="--c:var(--s-current)"></i><span><b>Current</b>: completed and good for more than 90 days (or never expires).</span></li><li><i class="dot" style="--c:var(--s-d30)"></i><span><b>≤30 days</b>: expires within the next 30 days.</span></li><li><i class="dot" style="--c:var(--s-d60)"></i><span><b>31–60 days</b>: expires in 31 to 60 days.</span></li><li><i class="dot" style="--c:var(--s-d90)"></i><span><b>61–90 days</b>: expires in 61 to 90 days.</span></li><li><i class="dot" style="--c:var(--s-expired)"></i><span><b>Expired</b>: the expiration date has passed.</span></li><li><i class="dot" style="--c:var(--s-failed)"></i><span><b>Failed</b>: the last attempt was not passed.</span></li><li><i class="dot" style="--c:var(--s-notdone)"></i><span><b>Not completed</b>: assigned but not finished (no completion or expiration date on file).</span></li><li><i class="dot" style="--c:var(--s-none)"></i><span><b>No training</b>: the person has no training on file.</span></li></ul>
       <p>Rows that are expired or expiring are shaded in their color so they stand out. Click a status button above the table to show only that status; click more than one to combine.</p>
       <h3>Tags and notes</h3>
       <ul class="plain">
@@ -423,8 +423,11 @@ function classify(r){
   if(!r.course) return 'none';
   const s = (r.src||'').toLowerCase();
   if(s==='failed') return 'failed';
-  if(s==='not completed') return 'notdone';
-  if(s==='expired') return 'expired';
+  // The source status can lag behind the dates (e.g. "Not Completed" on a course with a completion
+  // or expiration date). When there are dates, the dates decide.
+  const dated = r.expire || r.completed;
+  if(s==='not completed' && !dated) return 'notdone';
+  if(s==='expired' && !r.expire) return 'expired';
   if(r.expire){
     const d = r.days;
     if(d<0) return 'expired';
