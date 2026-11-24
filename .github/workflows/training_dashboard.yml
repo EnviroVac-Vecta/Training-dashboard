@@ -7,6 +7,9 @@ on:
   schedule:
     - cron: '45 11 * * *'   # daily, ~6:45 AM Central (summer) / 5:45 AM (winter)
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths: ['build.py', 'index.html', 'plants.js', '*.json']
 
 permissions:
   contents: read
