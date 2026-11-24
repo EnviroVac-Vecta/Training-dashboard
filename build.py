@@ -1,3 +1,4 @@
+# Training dashboard build (see README).
 """Build the training dashboard site from the HSI Training Summary file.
 
 1. Gets the Training Summary Excel file from SharePoint through the
