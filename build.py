@@ -706,6 +706,35 @@ def get_site_requirements():
     return {"cols": cols, "rows": rows}
 
 
+def check_statuses(cols, rows):
+    """Same rule as the page: when a row has dates, the dates decide over a 'Not Completed' / 'Expired' status."""
+    from collections import Counter
+    from datetime import date
+    ix = {c: cols.index(c) for c in ("Course Name", "Status", "Date Completed", "Date Expire")}
+    today = date.today().isoformat()
+    def by_dates(exp):
+        if not exp:
+            return "Current"
+        days = (date.fromisoformat(exp[:10]) - date.fromisoformat(today)).days
+        return "Expired" if days < 0 else ("Expiring within 90 days" if days <= 90 else "Current")
+    moved, courses, left = Counter(), Counter(), 0
+    for r in rows:
+        st = str(r[ix["Status"]] or "").strip().lower()
+        comp, exp = r[ix["Date Completed"]], r[ix["Date Expire"]]
+        if st == "not completed":
+            if comp or exp:
+                moved["Not Completed -> " + by_dates(exp)] += 1
+                courses[str(r[ix["Course Name"]])[:45]] += 1
+            else:
+                left += 1
+        elif st == "expired" and exp and by_dates(exp) != "Expired":
+            moved["Expired -> " + by_dates(exp)] += 1
+            courses[str(r[ix["Course Name"]])[:45]] += 1
+    print("::notice title=Status check::" + (", ".join(f"{k}: {v}" for k, v in moved.items()) or "no rows needed a change")
+          + f"; {left} rows stay Not completed (no dates on file). Most changed courses: "
+          + "; ".join(f"{k} ({v})" for k, v in courses.most_common(12)))
+
+
 def main():
     secrets = json.loads(os.environ.get("ALL_SECRETS") or "{}")
     passcode = secrets.get("DASHBOARD_PASSCODE") or os.environ.get("DASHBOARD_PASSCODE")
@@ -769,6 +798,7 @@ def main():
     with open(os.path.join(OUT, "robots.txt"), "w") as f:
         f.write("User-agent: *\nDisallow: /\n")
     pi = cols.index("Personal ID")
+    check_statuses(cols, rows)
     if UNPARSED:
         print("::warning title=Dates the dashboard couldn't read::" + "; ".join(f"{k} ({v})" for k, v in sorted(UNPARSED.items(), key=lambda x: -x[1])[:30])[:3000])
     with_pid = sum(1 for r in rows if r[pi] not in (None, ""))
